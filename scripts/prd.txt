@@ -1,0 +1,391 @@
+<context>
+# Overview  
+DocVerify is a powerful document content verification tool that allows users to check if specific content exists across multiple documents of various formats. It solves the challenge of manually searching through large document collections by automating the content detection process. This tool is designed for researchers, legal professionals, compliance officers, and knowledge workers who need to verify information across document repositories. DocVerify leverages the docling library to provide sophisticated document processing capabilities while maintaining an intuitive user experience.
+
+# Core Features  
+- **Multi-format Document Support**: Process and analyze documents in various formats including PDF, DOCX, TXT, HTML, and XML.
+  - Importance: Eliminates the need for format conversion and allows working with documents in their native format.
+  - Implementation: Utilizes docling's document parsing capabilities to handle different document structures.
+
+- **Batch Processing System**: Automatically intake documents from a designated input folder and process them in batches.
+  - Importance: Saves time by eliminating manual document loading and enables processing of large document collections.
+  - Implementation: Monitors an input directory, processes new documents, and outputs results to a specified output folder.
+
+- **Content Verification Engine**: Advanced search functionality that can identify specific text, patterns, formulas, or structured information.
+  - Importance: Goes beyond simple text matching to understand context and structure, including mathematical formulas.
+  - Implementation: Uses docling's enrichment and formula understanding modules to provide semantic search capabilities.
+
+- **Report Generation**: Creates comprehensive reports highlighting matches, context, and document metadata.
+  - Importance: Provides actionable insights and evidence of content verification.
+  - Implementation: Generates structured reports in multiple formats (PDF, HTML, JSON) with highlighting and annotations.
+
+# User Experience  
+## User Personas
+1. **Research Analyst**: Needs to verify data points across research papers and reports.
+   - Primary goals: Finding specific statistical information, verifying citations, tracking research claims.
+
+2. **Legal Professional**: Needs to check contract language and legal documents for specific clauses.
+   - Primary goals: Identifying standard clauses, finding discrepancies, ensuring compliance.
+
+3. **Content Manager**: Needs to maintain consistency across documentation.
+   - Primary goals: Ensuring standard terminology, checking for outdated information, managing content updates.
+
+## Key User Flows
+1. **Document Intake Flow**:
+   - User places documents in the input folder
+   - System automatically detects new documents
+   - Documents are processed and prepared for verification
+
+2. **Search Configuration Flow**:
+   - User defines search criteria (exact text, patterns, formulas)
+   - User sets search scope (all documents, specific folders, date ranges)
+   - User configures output format and detail level
+
+3. **Results Review Flow**:
+   - User receives notification when processing is complete
+   - Results are displayed in a searchable, filterable interface
+   - User can navigate between matches and original documents
+
+## UI/UX Considerations
+- Clean, minimal interface with focus on search functionality
+- Real-time progress indicators for batch processing operations
+- Context-aware visualization of matches within documents
+- Keyboard shortcuts for power users
+- Dark/light mode for different working environments
+- Accessibility features for screen readers and keyboard navigation
+</context>
+
+<PRD>
+# Technical Architecture  
+## System Components
+- **Document Processor**: Core engine responsible for parsing different document formats
+  - Utilizes docling library for document structure analysis
+  - Maintains document fidelity during processing
+  - Extractors for different document formats (PDF, DOCX, TXT, etc.)
+
+- **Content Analyzer**: Engine for content verification and matching
+  - Pattern matching module with regex support
+  - Semantic analysis module for contextual understanding
+  - Formula parser using docling's formula understanding capabilities
+  - Natural language processing for semantic search
+
+- **Storage Manager**: Handles document storage and retrieval
+  - File system integration for input/output folder monitoring
+  - Caching system for improved performance
+  - Document indexing for fast retrieval
+
+- **Report Generator**: Creates standardized outputs of verification results
+  - Template system for different report formats
+  - Visualization components for match highlighting
+  - Export functionality for various output formats
+
+- **User Interface**: Web-based interface for system interaction
+  - Search configuration panel
+  - Results dashboard
+  - Document viewer with highlighting
+  - Batch job management
+
+## Data Models
+- **Document Model**:
+  ```markdown
+  {
+    id: String,                   // Unique document identifier
+    filename: String,             // Original file name
+    format: String,               // Document format (PDF, DOCX, etc.)
+    content: {                    // Structured content representation
+      text: String,               // Full text content
+      sections: Array,            // Document sections/hierarchy
+      metadata: Object            // Document properties
+    },
+    processingStatus: String,     // Current processing state
+    createdAt: DateTime,          // Time document was added
+    lastModified: DateTime        // Time document was last modified
+  }
+  ```
+
+- **Search Query Model**:
+  ```markdown
+  {
+    id: String,                   // Unique query identifier
+    patterns: Array,              // Search patterns/terms
+    options: {                    // Search configuration
+      caseSensitive: Boolean,     // Case sensitivity
+      wholeWord: Boolean,         // Whole word matching
+      regex: Boolean,             // Regex pattern support
+      formulaMatch: Boolean       // Formula matching enabled
+    },
+    scope: {                      // Search boundaries
+      documentIds: Array,         // Specific documents to search
+      folderPaths: Array,         // Folders to include
+      dateRange: Object           // Time constraints
+    },
+    createdAt: DateTime,          // Time query was created
+    createdBy: String             // User who created the query
+  }
+  ```
+
+- **Result Model**:
+  ```markdown
+  {
+    id: String,                   // Unique result identifier
+    queryId: String,              // Associated query
+    documentId: String,           // Document with match
+    matches: Array,               // Array of match objects
+    matchCount: Number,           // Total matches found
+    generatedAt: DateTime,        // Time results were generated
+    reportUrl: String             // Link to detailed report
+  }
+  ```
+
+## APIs and Integrations
+- **Core API Endpoints**:
+  - `/api/documents` - Document management
+  - `/api/search` - Search configuration and execution
+  - `/api/results` - Result retrieval and management
+  - `/api/reports` - Report generation and access
+
+- **External Integrations**:
+  - Docling API for enhanced document processing
+  - Cloud storage providers (optional)
+  - Authentication systems (LDAP, OAuth)
+  - Notification systems (email, webhooks)
+
+## Infrastructure Requirements
+- **Server Requirements**:
+  - Python 3.8+ environment
+  - Virtual environment with docling installed
+  - Sufficient storage for document repository
+  - Memory optimized for document processing (min. 8GB RAM)
+
+- **Client Requirements**:
+  - Modern web browser (Chrome, Firefox, Safari, Edge)
+  - Network access to server
+  - JavaScript enabled
+
+- **Deployment Options**:
+  - Docker containerization
+  - Local installation
+  - Cloud deployment (AWS, GCP, Azure)
+
+# Development Roadmap  
+## MVP Requirements
+1. **Document Intake System**
+   - Basic input folder monitoring
+   - Support for PDF, DOCX, and TXT formats
+   - Document metadata extraction
+   - Error handling for corrupted documents
+
+2. **Basic Content Verification**
+   - Text-based search functionality
+   - Simple pattern matching
+   - Case-sensitive/insensitive options
+   - Basic result highlighting
+
+3. **Minimal User Interface**
+   - Search configuration form
+   - Results display
+   - Basic document viewer
+   - Folder selection dialog
+
+4. **Result Output**
+   - Simple HTML reports
+   - JSON export option
+   - Basic match highlighting
+   - Result filtering options
+
+5. **Docling Integration**
+   - Basic formula recognition
+   - Core linguistic enrichments
+   - Document structure analysis
+
+## Future Enhancements
+1. **Advanced Document Understanding**
+   - Table extraction and verification
+   - Image content analysis (OCR)
+   - Chart and graph data extraction
+   - Multilingual document support
+
+2. **Enhanced Search Capabilities**
+   - Semantic search using NLP
+   - Advanced formula matching
+   - Fuzzy matching algorithms
+   - Contextual understanding
+
+3. **Workflow Automation**
+   - Scheduled verification jobs
+   - Trigger-based processing
+   - Automated report distribution
+   - Alert system for specific matches
+
+4. **Collaboration Features**
+   - Multi-user support
+   - Comment and annotation
+   - Shared search templates
+   - Result bookmarking
+
+5. **Integration Ecosystem**
+   - API for third-party applications
+   - Plugin architecture
+   - Enterprise system connectors
+   - Version control system integration
+
+# Logical Dependency Chain
+## Foundation Layer (Build First)
+1. **Document Processing Engine**
+   - File system monitoring
+   - Basic document parsing
+   - Document storage system
+   - Format conversion utilities
+
+2. **Core Search Functionality**
+   - Text extraction
+   - Basic pattern matching
+   - Search query parser
+   - Result compilation
+
+3. **Docling Integration Foundation**
+   - Environment setup (.venv)
+   - Core API connections
+   - Basic enrichment implementation
+   - Formula structure recognition
+
+## Visible Front-End Layer (Quick Win)
+4. **Minimal User Interface**
+   - Search configuration panel
+   - Results display
+   - Document browser
+   - Basic settings
+
+5. **Interactive Document Viewer**
+   - Document rendering
+   - Search result highlighting
+   - Navigation controls
+   - Zoom and page controls
+
+## Feature Expansion Layer
+6. **Advanced Search Capabilities**
+   - Regex pattern support
+   - Context-aware matching
+   - Multi-document search
+   - Search templates
+
+7. **Enhanced Document Processing**
+   - Additional format support
+   - Structure recognition
+   - Metadata enrichment
+   - Content categorization
+
+8. **Report Generation System**
+   - Template-based reports
+   - Multiple output formats
+   - Customization options
+   - Batch report generation
+
+## Optimization Layer
+9. **Performance Improvements**
+   - Document indexing
+   - Caching mechanisms
+   - Parallel processing
+   - Resource optimization
+
+10. **User Experience Refinements**
+    - UI/UX improvements
+    - Keyboard shortcuts
+    - Accessibility features
+    - Responsive design
+
+# Risks and Mitigations  
+## Technical Challenges
+1. **Document Format Complexity**
+   - **Risk**: Some document formats may have complex structures that are difficult to parse reliably.
+   - **Mitigation**: Implement progressive format support, starting with well-structured formats. Use docling's specialized parsing capabilities and implement format-specific fallback mechanisms.
+
+2. **Formula Recognition Accuracy**
+   - **Risk**: Mathematical and scientific formulas have complex syntax that may be difficult to recognize accurately.
+   - **Mitigation**: Leverage docling's formula understanding module, implement confidence scoring, and provide user verification options for lower-confidence matches.
+
+3. **Performance with Large Documents**
+   - **Risk**: Processing large documents or large batches may cause performance issues.
+   - **Mitigation**: Implement chunking strategies, progressive loading, and background processing. Consider distributed processing for enterprise deployments.
+
+## MVP Scoping Challenges
+1. **Feature Scope Creep**
+   - **Risk**: Adding too many features to the MVP could delay release and increase complexity.
+   - **Mitigation**: Strictly prioritize features based on core user needs. Implement a scoring system for feature importance and technical complexity to guide development decisions.
+
+2. **Integration Complexity**
+   - **Risk**: Docling integration may introduce unexpected complexity or dependencies.
+   - **Mitigation**: Create a thin abstraction layer over docling functionality to isolate changes. Implement progressive integration starting with core features.
+
+3. **User Adoption Barriers**
+   - **Risk**: Complex user interface may hinder adoption of the MVP.
+   - **Mitigation**: Focus on a minimal but intuitive UI for the most common tasks. Include guided tours and contextual help. Gather early user feedback.
+
+## Resource Constraints
+1. **Processing Resource Requirements**
+   - **Risk**: Document processing may require significant computational resources.
+   - **Mitigation**: Implement resource-aware processing that scales based on available system resources. Provide configuration options for resource allocation.
+
+2. **Storage Growth**
+   - **Risk**: Document storage needs may grow rapidly with usage.
+   - **Mitigation**: Implement storage management policies, document retention options, and compression strategies. Consider indexed references instead of duplicating content.
+
+3. **Development Expertise**
+   - **Risk**: Specialized knowledge of document processing and docling may be required.
+   - **Mitigation**: Create comprehensive internal documentation. Allocate time for knowledge acquisition and training. Consider consulting with docling experts.
+
+# Appendix  
+## Research Findings
+### Document Format Analysis
+| Format | Parsing Complexity | Docling Support | Notes |
+|--------|-------------------|----------------|-------|
+| PDF    | High              | Partial        | Requires additional libraries for best results |
+| DOCX   | Medium            | Good           | Structure and styles preserved |
+| TXT    | Low               | Excellent      | Fast processing, limited structure |
+| HTML   | Medium            | Good           | Structure preserved, styling variable |
+| XML    | Medium            | Good           | Structure-focused, good for data-rich documents |
+
+### Docling Capabilities Assessment
+- **Formula Understanding**: Advanced capabilities for mathematical and scientific notation
+- **Linguistic Enrichments**: Strong support for text analysis and semantic understanding
+- **Document Structure**: Good support for hierarchical document models
+- **Installation**: Requires Python virtual environment (.venv)
+- **API Stability**: Generally stable, but documentation could be improved
+
+## Technical Specifications
+### Document Processing Performance Benchmarks
+- Small documents (<1MB): ~1-2 seconds
+- Medium documents (1-10MB): ~5-10 seconds
+- Large documents (>10MB): ~20-60 seconds depending on complexity
+
+### Recommended System Specifications
+- **Processor**: Quad-core CPU or better
+- **Memory**: 8GB RAM minimum, 16GB recommended
+- **Storage**: SSD preferred for document processing
+- **Network**: Gigabit Ethernet for multi-user deployments
+- **Operating System**: Platform-independent (Windows, macOS, Linux)
+
+### Docling Integration Instructions
+```python
+# Install docling in virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+pip install docling
+
+# Basic usage example
+from docling import Document, Enrichments
+
+# Load document
+doc = Document.from_file("input/sample.pdf")
+
+# Apply enrichments
+enriched_doc = Enrichments.apply(doc, ["formula", "structure"])
+
+# Search for content
+results = enriched_doc.search("E=mc^2")
+
+# Output results
+with open("output/results.html", "w") as f:
+    f.write(results.to_html())
+```
+</PRD>

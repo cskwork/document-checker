@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %} - 문서 검색{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-search me-2"></i>문서 검색</h5>
+            </div>
+            <div class="card-body">
+                <form id="searchForm">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <div id="searchPatterns">
+                                <div class="mb-3">
+                                    <label class="form-label">검색어</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="patterns[]" placeholder="검색할 단어나 문장을 입력하세요" required>
+                                        <button type="button" class="btn btn-outline-secondary" id="addPattern">
+                                            <i class="bi bi-plus-lg"></i> 추가
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="caseSensitive" name="options[caseSensitive]">
+                                        <label class="form-check-label" for="caseSensitive">대소문자 구분</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="wholeWord" name="options[wholeWord]">
+                                        <label class="form-check-label" for="wholeWord">단어 단위 일치</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="regex" name="options[regex]">
+                                        <label class="form-check-label" for="regex">정규식 사용</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">문서 유형</label>
+                                <select class="form-select" name="scope[fileType]" multiple>
+                                    <option value="pdf" selected>PDF</option>
+                                    <option value="docx" selected>Word (DOCX)</option>
+                                    <option value="xlsx" selected>Excel (XLSX)</option>
+                                    <option value="txt" selected>텍스트 (TXT)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">날짜 범위</label>
+                                <div class="input-group">
+                                    <input type="date" class="form-control" name="scope[dateFrom]">
+                                    <span class="input-group-text">~</span>
+                                    <input type="date" class="form-control" name="scope[dateTo]">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="reset" class="btn btn-outline-secondary me-md-2">초기화</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i> 검색 실행
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mb-4" id="resultsCard" style="display: none;">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">검색 결과</h5>
+                    <span class="badge bg-primary" id="resultCount">0개 문서</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    <div class="col-md-4 border-end">
+                        <div class="list-group list-group-flush" id="resultsList" style="max-height: 500px; overflow-y: auto;">
+                            <!-- 검색 결과가 여기에 표시됩니다 -->
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="p-3" id="documentPreview">
+                            <div class="text-center py-5">
+                                <i class="bi bi-file-earmark-text" style="font-size: 3rem; opacity: 0.5;"></i>
+                                <p class="mt-3">왼쪽에서 문서를 선택하세요</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('searchForm');
+    const addPatternBtn = document.getElementById('addPattern');
+    const searchPatterns = document.getElementById('searchPatterns');
+    const resultsCard = document.getElementById('resultsCard');
+    const resultsList = document.getElementById('resultsList');
+    const resultCount = document.getElementById('resultCount');
+    const documentPreview = document.getElementById('documentPreview');
+    
+    // 검색어 추가 버튼 이벤트
+    addPatternBtn.addEventListener('click', function() {
+        const patternCount = document.querySelectorAll('input[name="patterns[]"]').length;
+        const newPattern = document.createElement('div');
+        newPattern.className = 'mb-3';
+        newPattern.innerHTML = `
+            <div class="input-group">
+                <input type="text" class="form-control" name="patterns[]" placeholder="검색할 단어나 문장을 입력하세요" required>
+                <button type="button" class="btn btn-outline-danger remove-pattern">
+                    <i class="bi bi-dash-lg"></i> 제거
+                </button>
+            </div>
+        `;
+        searchPatterns.appendChild(newPattern);
+        
+        // 제거 버튼 이벤트 추가
+        newPattern.querySelector('.remove-pattern').addEventListener('click', function() {
+            newPattern.remove();
+        });
+    });
+    
+    // 검색 폼 제출 이벤트
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 검색 데이터 수집
+        const patterns = Array.from(document.querySelectorAll('input[name="patterns[]"]'))
+            .map(input => input.value)
+            .filter(pattern => pattern.trim() !== '');
+            
+        if (patterns.length === 0) {
+            alert('검색어를 입력해주세요.');
+            return;
+        }
+        
+        const options = {
+            caseSensitive: document.getElementById('caseSensitive').checked,
+            wholeWord: document.getElementById('wholeWord').checked,
+            regex: document.getElementById('regex').checked
+        };
+        
+        const fileTypes = Array.from(document.querySelectorAll('select[name="scope[fileType]"] option:checked'))
+            .map(option => option.value);
+            
+        const dateFrom = document.querySelector('input[name="scope[dateFrom]"]').value;
+        const dateTo = document.querySelector('input[name="scope[dateTo]"]').value;
+        
+        const searchData = {
+            patterns: patterns,
+            options: options,
+            scope: {
+                fileType: fileTypes,
+                dateFrom: dateFrom,
+                dateTo: dateTo
+            }
+        };
+        
+        // 검색 실행
+        executeSearch(searchData);
+    });
+    
+    // 검색 실행 함수
+    function executeSearch(searchData) {
+        // 로딩 표시
+        resultsList.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">검색 중...</p></div>';
+        resultsCard.style.display = 'block';
+        
+        // API 호출
+        fetch('/api/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(searchData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                displayResults(data.data.results);
+            } else {
+                throw new Error(data.message || '검색 중 오류가 발생했습니다.');
+            }
+        })
+        .catch(error => {
+            resultsList.innerHTML = `<div class="alert alert-danger m-3">${error.message}</div>`;
+        });
+    }
+    
+    // 검색 결과 표시 함수
+    function displayResults(results) {
+        if (!results || results.length === 0) {
+            resultsList.innerHTML = '<div class="text-center p-4"><i class="bi bi-exclamation-circle" style="font-size: 2rem; opacity: 0.5;"></i><p class="mt-2">검색 결과가 없습니다.</p></div>';
+            resultCount.textContent = '0개 문서';
+            return;
+        }
+        
+        resultCount.textContent = `${results.length}개 문서`;
+        resultsList.innerHTML = '';
+        
+        results.forEach((result, index) => {
+            const resultItem = document.createElement('a');
+            resultItem.href = '#';
+            resultItem.className = 'list-group-item list-group-item-action';
+            resultItem.innerHTML = `
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${result.filename}</h6>
+                    <small class="text-muted">${new Date(result.date).toLocaleDateString()}</small>
+                </div>
+                <p class="mb-1 small">${result.matches.length}개 일치 항목 발견</p>
+                <small class="text-muted">${result.filetype.toUpperCase()}, ${formatFileSize(result.size)}</small>
+            `;
+            
+            resultItem.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('#resultsList a').forEach(item => item.classList.remove('active'));
+                this.classList.add('active');
+                displayDocumentPreview(result);
+            });
+            
+            resultsList.appendChild(resultItem);
+        });
+        
+        // 첫 번째 결과 자동 선택
+        if (results.length > 0) {
+            resultsList.querySelector('a').classList.add('active');
+            displayDocumentPreview(results[0]);
+        }
+    }
+    
+    // 문서 미리보기 표시 함수
+    function displayDocumentPreview(document) {
+        documentPreview.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>${document.filename}</h5>
+                <a href="/view/document/${document.id}" class="btn btn-sm btn-outline-primary" target="_blank">
+                    <i class="bi bi-arrows-fullscreen"></i> 전체 보기
+                </a>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> 
+                        ${document.filetype.toUpperCase()} 파일, ${formatFileSize(document.size)}, 
+                        업로드: ${new Date(document.date).toLocaleString()}
+                    </small>
+                </div>
+                <div class="card-body">
+                    <div id="matchesList">
+                        ${document.matches.map((match, idx) => `
+                            <div class="mb-3 p-2 border-start border-primary border-3">
+                                <div class="small text-muted mb-1">일치 항목 #${idx + 1}</div>
+                                <div class="bg-light p-2 rounded">
+                                    <pre class="mb-0" style="white-space: pre-wrap;">${match.context_before}<mark>${match.text}</mark>${match.context_after}</pre>
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    페이지 ${match.page || 'N/A'}, 위치: ${match.position || 'N/A'}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 파일 크기 포맷 함수
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+});
+</script>
+{% endblock %}

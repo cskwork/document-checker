@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %} - 홈{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-house-door me-2"></i>문서 검사기 대시보드</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h1 class="display-4 text-primary" id="totalDocuments">0</h1>
+                                <p class="card-text">총 문서 수</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h1 class="display-4 text-success" id="processedDocuments">0</h1>
+                                <p class="card-text">처리된 문서</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h1 class="display-4 text-warning" id="pendingDocuments">0</h1>
+                                <p class="card-text">대기 중인 문서</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h1 class="display-4 text-danger" id="errorDocuments">0</h1>
+                                <p class="card-text">오류 문서</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">최근 문서</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>문서명</th>
+                                                <th>상태</th>
+                                                <th>업로드 일시</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentDocuments">
+                                            <tr>
+                                                <td colspan="3" class="text-center">문서가 없습니다.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">최근 검색 기록</h6>
+                                <a href="{{ url_for('search_page') }}" class="btn btn-sm btn-outline-primary">전체 보기</a>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush">
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span>검색어: <strong>중요 문서</strong></span>
+                                            <small class="text-muted">방금 전</small>
+                                        </div>
+                                        <div class="text-muted small">3개 문서에서 12개 일치 항목 발견</div>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span>검색어: <strong>개인정보</strong></span>
+                                            <small class="text-muted">1시간 전</small>
+                                        </div>
+                                        <div class="text-muted small">5개 문서에서 8개 일치 항목 발견</div>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span>검색어: <strong>계약서</strong></span>
+                                            <small class="text-muted">3시간 전</small>
+                                        </div>
+                                        <div class="text-muted small">2개 문서에서 5개 일치 항목 발견</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">문서 유형별 분포</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <canvas id="documentTypeChart" height="200"></canvas>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>PDF</span>
+                                            <span class="fw-bold">45%</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 20px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 45%"></div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>DOCX</span>
+                                            <span class="fw-bold">30%</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 30%"></div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>XLSX</span>
+                                            <span class="fw-bold">15%</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 20px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 15%"></div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>기타</span>
+                                            <span class="fw-bold">10%</span>
+                                        </div>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-danger" role="progressbar" style="width: 10%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // 문서 유형 차트
+    document.addEventListener('DOMContentLoaded', function() {
+        // 대시보드 통계 데이터 로드
+        loadDashboardStats();
+        
+        // 문서 유형 차트 초기화
+        const ctx = document.getElementById('documentTypeChart').getContext('2d');
+        const documentTypeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['PDF', 'DOCX', 'XLSX', 'TXT', '기타'],
+                datasets: [{
+                    data: [45, 30, 15, 7, 3],
+                    backgroundColor: [
+                        '#0d6efd',
+                        '#198754',
+                        '#ffc107',
+                        '#6c757d',
+                        '#dc3545'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                return `${label}: ${value}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 문서 업로드 버튼 이벤트
+        document.getElementById('uploadBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            const uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
+            uploadModal.show();
+        });
+        
+        // 문서 업로드 폼 제출
+        document.getElementById('submitUpload').addEventListener('click', function() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('파일을 선택해주세요.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const progressBar = document.querySelector('#uploadProgress .progress-bar');
+            const progressContainer = document.getElementById('uploadProgress');
+            
+            progressContainer.classList.remove('d-none');
+            progressBar.style.width = '0%';
+            
+            // 파일 업로드 요청
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    progressBar.style.width = '100%';
+                    progressBar.classList.remove('bg-primary');
+                    progressBar.classList.add('bg-success');
+                    
+                    // 성공 메시지 표시
+                    setTimeout(() => {
+                        const uploadModal = bootstrap.Modal.getInstance(document.getElementById('uploadModal'));
+                        uploadModal.hide();
+                        
+                        // 페이지 새로고침
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error(data.message || '파일 업로드 중 오류가 발생했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                progressBar.classList.remove('bg-primary');
+                progressBar.classList.add('bg-danger');
+                alert(error.message || '파일 업로드 중 오류가 발생했습니다.');
+            });
+        });
+    });
+    
+    // 대시보드 통계 로드 함수
+    function loadDashboardStats() {
+        // 실제 API 엔드포인트로 대체 필요
+        fetch('/api/documents/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // 문서 통계 업데이트
+                    document.getElementById('totalDocuments').textContent = data.data.total || 0;
+                    document.getElementById('processedDocuments').textContent = data.data.processed || 0;
+                    document.getElementById('pendingDocuments').textContent = data.data.pending || 0;
+                    document.getElementById('errorDocuments').textContent = data.data.error || 0;
+                    
+                    // 최근 문서 목록 업데이트
+                    updateRecentDocuments(data.data.recentDocuments || []);
+                }
+            })
+            .catch(error => {
+                console.error('대시보드 통계를 불러오는 중 오류가 발생했습니다:', error);
+            });
+    }
+    
+    // 최근 문서 목록 업데이트 함수
+    function updateRecentDocuments(documents) {
+        const tbody = document.getElementById('recentDocuments');
+        
+        if (documents.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center">문서가 없습니다.</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        documents.forEach(doc => {
+            let statusBadge = '';
+            switch(doc.status) {
+                case 'processed':
+                    statusBadge = '<span class="badge bg-success">처리 완료</span>';
+                    break;
+                case 'processing':
+                    statusBadge = '<span class="badge bg-warning">처리 중</span>';
+                    break;
+                case 'error':
+                    statusBadge = '<span class="badge bg-danger">오류</span>';
+                    break;
+                default:
+                    statusBadge = `<span class="badge bg-secondary">${doc.status}</span>`;
+            }
+            
+            html += `
+                <tr>
+                    <td>
+                        <a href="/view/document/${doc.id}" class="text-decoration-none">
+                            <i class="bi bi-file-earmark me-1"></i>${doc.filename}
+                        </a>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td>${new Date(doc.uploaded_at).toLocaleString()}</td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+</script>
+{% endblock %}
