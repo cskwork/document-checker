@@ -56,14 +56,171 @@ def get_document(doc_id):
             
         document = storage_manager.get_document(doc_id)
         if document:
+            # 문서 내용 추출 (content가 객체인 경우 text 필드 추출)
+            content = document.get('content', '')
+            if isinstance(content, dict):
+                content = content.get('text', '')
+            elif content is None:
+                content = ''
+            
+            # 문서 데이터 표준화 및 누락된 필드 보완
+            standardized_doc = {
+                'id': document.get('id', doc_id),
+                'filename': document.get('filename', 'Unknown File'),
+                'filetype': (document.get('format') or document.get('filetype') or 'unknown').lower(),
+                'size': document.get('size', 0),
+                'pages': document.get('pages', 1),
+                'uploaded_at': document.get('createdAt') or document.get('uploaded_at') or '1970-01-01T00:00:00Z',
+                'author': document.get('author', 'Unknown'),
+                'content': content,
+                'metadata': document.get('metadata', {})
+            }
+            
             return jsonify({
                 'status': 'success',
-                'data': document
+                'data': standardized_doc
             })
         return jsonify({
             'status': 'error',
             'message': 'Document not found'
         }), 404
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/documents/<doc_id>/pages/<int:page_num>', methods=['GET'])
+def get_document_page(doc_id, page_num):
+    """문서의 특정 페이지를 조회하는 API 엔드포인트"""
+    try:
+        if not storage_manager:
+            raise Exception("Storage manager not initialized")
+            
+        document = storage_manager.get_document(doc_id)
+        if not document:
+            return jsonify({
+                'status': 'error',
+                'message': 'Document not found'
+            }), 404
+            
+        # 문서 내용 추출 (content가 객체인 경우 text 필드 추출)
+        content = document.get('content', '')
+        if isinstance(content, dict):
+            content = content.get('text', '')
+        elif content is None:
+            content = ''
+            
+        # 전체 문서 내용을 페이지로 나누어 반환
+        # 현재는 페이지 분할이 구현되어 있지 않으므로, 전체 내용을 반환
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'content': content,
+                'content_type': 'html',  # 또는 document.get('content_type', 'html')
+                'page': page_num,
+                'total_pages': document.get('pages', 1)
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/documents/<doc_id>/download', methods=['GET'])
+def download_document(doc_id):
+    """문서 다운로드 API 엔드포인트"""
+    try:
+        if not storage_manager:
+            raise Exception("Storage manager not initialized")
+            
+        document = storage_manager.get_document(doc_id)
+        if not document:
+            return jsonify({
+                'status': 'error',
+                'message': 'Document not found'
+            }), 404
+            
+        # 문서 내용 추출 (content가 객체인 경우 text 필드 추출)
+        content = document.get('content', '')
+        if isinstance(content, dict):
+            content = content.get('text', '')
+        elif content is None:
+            content = ''
+            
+        # 원본 파일 경로가 있다면 파일을 직접 반환
+        # 현재는 단순히 내용을 텍스트로 반환
+        filename = document.get('filename', f'document_{doc_id}.txt')
+        
+        from flask import make_response
+        response = make_response(content)
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+        
+        return response
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/documents/<doc_id>/search', methods=['POST'])
+def search_in_document(doc_id):
+    """문서 내 검색 API 엔드포인트"""
+    try:
+        if not storage_manager or not content_analyzer:
+            raise Exception("Required components not initialized")
+            
+        data = request.json or {}
+        search_query = data.get('query', '')
+        
+        if not search_query:
+            return jsonify({
+                'status': 'error',
+                'message': 'Search query is required'
+            }), 400
+            
+        document = storage_manager.get_document(doc_id)
+        if not document:
+            return jsonify({
+                'status': 'error',
+                'message': 'Document not found'
+            }), 404
+            
+        # 문서 내용 추출 (content가 객체인 경우 text 필드 추출)
+        content = document.get('content', '')
+        if isinstance(content, dict):
+            content = content.get('text', '')
+        elif content is None:
+            content = ''
+        matches = []
+        
+        import re
+        for match in re.finditer(re.escape(search_query), content, re.IGNORECASE):
+            start = max(0, match.start() - 50)
+            end = min(len(content), match.end() + 50)
+            context_before = content[start:match.start()]
+            context_after = content[match.end():end]
+            
+            matches.append({
+                'text': match.group(),
+                'context_before': context_before,
+                'context_after': context_after,
+                'page': 1,  # 현재는 단일 페이지로 처리
+                'position': match.start()
+            })
+            
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'matches': matches,
+                'total_matches': len(matches)
+            }
+        })
     except Exception as e:
         return jsonify({
             'status': 'error',
@@ -143,7 +300,7 @@ def execute_search():
                         'id': doc_id,
                         'filename': doc_meta.get('filename', 'Unknown File'),
                         'date': doc_meta.get('createdAt', datetime.datetime.now().isoformat()), # 'createdAt' 키 사용
-                        'filetype': doc_meta.get('format', 'N/A').upper(),          # 'format' 키 사용
+                        'filetype': (doc_meta.get('format') or 'N/A').upper(),          # 'format' 키 사용
                         'size': doc_meta.get('size', 0),
                         'matches': [],
                         'matchCountInDoc': 0

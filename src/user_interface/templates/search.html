@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <small class="text-muted">${new Date(result.date).toLocaleDateString()}</small>
                 </div>
                 <p class="mb-1 small">${result.matches.length}개 일치 항목 발견</p>
-                <small class="text-muted">${result.filetype.toUpperCase()}, ${formatFileSize(result.size)}</small>
+                <small class="text-muted">${(result.filetype || 'unknown').toUpperCase()}, ${formatFileSize(result.size)}</small>
             `;
             
             resultItem.addEventListener('click', function(e) {
@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="card-header">
                     <small class="text-muted">
                         <i class="bi bi-info-circle"></i> 
-                        ${document.filetype.toUpperCase()} 파일, ${formatFileSize(document.size)}, 
+                        ${(document.filetype || 'unknown').toUpperCase()} 파일, ${formatFileSize(document.size)}, 
                         업로드: ${new Date(document.date).toLocaleString()}
                     </small>
                 </div>
