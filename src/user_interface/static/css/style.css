@@ -1,0 +1,143 @@
+/* 문서 검사기 커스텀 스타일 - Tailwind CSS와 함께 사용 */
+
+/* 문서 뷰어용 하이라이트 스타일 */
+.highlight {
+    background-color: #fef3c7;
+    padding: 0.1em 0.2em;
+    border-radius: 0.2em;
+}
+
+.highlight-active {
+    background-color: #fcd34d !important;
+    animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* 문서 내용 스타일링 - document_viewer.html에서 사용 */
+.document-content {
+    font-family: 'Noto Sans KR', system-ui, sans-serif;
+    line-height: 1.7;
+    word-wrap: break-word;
+}
+
+.document-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.document-content h1, .document-content h2, .document-content h3 {
+    color: #1f2937;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 0.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.document-content h1 { font-size: 1.875rem; font-weight: 700; }
+.document-content h2 { font-size: 1.5rem; font-weight: 600; }
+.document-content h3 { font-size: 1.25rem; font-weight: 600; }
+
+.document-content table {
+    width: 100%;
+    margin: 1.5rem 0;
+    border-collapse: collapse;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.document-content table th {
+    background-color: #3b82f6;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    padding: 0.75rem;
+}
+
+.document-content table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+.document-content table tr:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+.document-content p {
+    margin-bottom: 1rem;
+    text-align: justify;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.document-content ul, .document-content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.document-content li {
+    margin-bottom: 0.5rem;
+    line-height: 1.7;
+}
+
+.document-content strong {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.document-content em {
+    color: #6b7280;
+    font-style: italic;
+}
+
+.document-content .image-placeholder {
+    background-color: #f3f4f6;
+    border: 2px dashed #d1d5db;
+    padding: 1.5rem;
+    text-align: center;
+    margin: 1rem 0;
+    border-radius: 0.5rem;
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* 커스텀 스크롤바 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* 유틸리티 클래스 */
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.transition-colors {
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %} - 오류{% endblock %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-96">
+    <div class="max-w-md w-full">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 text-center p-8">
+            <h1 class="text-6xl font-bold text-red-500 mb-4">{{ error_code }}</h1>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ error_message }}</h2>
+            <p class="text-gray-600 mb-6">죄송합니다. 요청하신 페이지를 찾을 수 없거나 오류가 발생했습니다.</p>
+            <a href="{{ url_for('index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                </svg>
+                홈으로 돌아가기
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

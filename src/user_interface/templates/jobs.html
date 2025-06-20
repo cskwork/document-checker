@@ -1,0 +1,547 @@
+{% extends "base.html" %}
+
+{% block title %}배치 작업 관리{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold text-gray-900">배치 작업 관리</h1>
+    
+    <!-- 작업 생성 카드 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="bg-primary-600 text-white px-6 py-4 rounded-t-lg">
+            <h2 class="text-xl font-semibold">새 배치 작업 생성</h2>
+        </div>
+        <div class="p-6">
+            <form id="create-job-form" class="space-y-6">
+                <div>
+                    <label for="job-type" class="block text-sm font-medium text-gray-700 mb-2">작업 유형</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" id="job-type" required>
+                        <option value="" selected disabled>작업 유형 선택</option>
+                        <option value="process_directory">디렉토리 일괄 처리</option>
+                        <option value="bulk_analyze">일괄 분석</option>
+                        <option value="generate_reports">보고서 일괄 생성</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="job-name" class="block text-sm font-medium text-gray-700 mb-2">작업 이름 (선택사항)</label>
+                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" id="job-name" placeholder="작업 이름을 입력하세요">
+                </div>
+                
+                <!-- 디렉토리 처리 매개변수 -->
+                <div class="job-params space-y-4" id="process_directory-params" style="display: none;">
+                    <div>
+                        <label for="directory-path" class="block text-sm font-medium text-gray-700 mb-2">디렉토리 경로</label>
+                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" id="directory-path" placeholder="처리할 디렉토리 경로">
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded" id="recursive">
+                        <label class="ml-2 block text-sm text-gray-900" for="recursive">하위 디렉토리 포함</label>
+                    </div>
+                </div>
+                
+                <!-- 일괄 분석 매개변수 -->
+                <div class="job-params space-y-4" id="bulk_analyze-params" style="display: none;">
+                    <div>
+                        <label for="search-patterns" class="block text-sm font-medium text-gray-700 mb-2">검색 패턴 (쉼표로 구분)</label>
+                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" id="search-patterns" placeholder="검색할 패턴 입력">
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded" id="case-sensitive">
+                        <label class="ml-2 block text-sm text-gray-900" for="case-sensitive">대소문자 구분</label>
+                    </div>
+                </div>
+                
+                <!-- 보고서 생성 매개변수 -->
+                <div class="job-params space-y-4" id="generate_reports-params" style="display: none;">
+                    <div>
+                        <label for="report-format" class="block text-sm font-medium text-gray-700 mb-2">보고서 형식</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" id="report-format">
+                            <option value="html">HTML</option>
+                            <option value="json">JSON</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="report-title" class="block text-sm font-medium text-gray-700 mb-2">보고서 제목</label>
+                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" id="report-title" placeholder="보고서 제목 입력">
+                    </div>
+                </div>
+                
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">작업 생성</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 작업 목록 카드 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="bg-gray-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+            <h2 class="text-xl font-semibold">작업 목록</h2>
+            <button id="refresh-jobs" class="inline-flex items-center px-3 py-1 border border-white border-opacity-20 text-sm font-medium rounded-md text-white hover:bg-white hover:bg-opacity-10 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                새로고침
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업 유형</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">진행률</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">생성 시간</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
+                    </tr>
+                </thead>
+                <tbody id="jobs-table-body" class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">로딩 중...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 작업 상세 정보 모달 -->
+    <div id="job-details-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="job-details-modal-label" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="job-details-modal-label">작업 상세 정보</h3>
+                            <div id="job-details-content">
+                                <!-- 작업 상세 정보가 여기에 동적으로 로드됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="close-job-details" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:w-auto sm:text-sm">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 작업 유형에 따라 매개변수 폼 표시/숨김
+document.getElementById('job-type').addEventListener('change', function() {
+    // 모든 매개변수 폼 숨기기
+    document.querySelectorAll('.job-params').forEach(function(el) {
+        el.style.display = 'none';
+    });
+    
+    // 선택된 작업 유형에 해당하는 매개변수 폼 표시
+    const selectedType = this.value;
+    const paramsEl = document.getElementById(selectedType + '-params');
+    if (paramsEl) {
+        paramsEl.style.display = 'block';
+    }
+});
+
+// 작업 생성 폼 제출
+document.getElementById('create-job-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const jobType = document.getElementById('job-type').value;
+    const jobName = document.getElementById('job-name').value;
+    
+    // 공통 매개변수
+    let jobParams = {
+        name: jobName || undefined
+    };
+    
+    // 작업 유형별 매개변수 추가
+    if (jobType === 'process_directory') {
+        jobParams.directory_path = document.getElementById('directory-path').value;
+        jobParams.recursive = document.getElementById('recursive').checked;
+    } else if (jobType === 'bulk_analyze') {
+        const patterns = document.getElementById('search-patterns').value
+            .split(',')
+            .map(p => p.trim())
+            .filter(p => p);
+        jobParams.patterns = patterns;
+        jobParams.case_sensitive = document.getElementById('case-sensitive').checked;
+    } else if (jobType === 'generate_reports') {
+        jobParams.format = document.getElementById('report-format').value;
+        jobParams.title = document.getElementById('report-title').value;
+    }
+    
+    // API 호출
+    fetch('/api/jobs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            job_type: jobType,
+            job_params: jobParams
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('작업이 성공적으로 생성되었습니다.');
+            loadJobs(); // 작업 목록 새로고침
+            this.reset(); // 폼 초기화
+            document.querySelectorAll('.job-params').forEach(function(el) {
+                el.style.display = 'none';
+            });
+        } else {
+            alert('작업 생성 중 오류가 발생했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('작업 생성 중 오류가 발생했습니다.');
+    });
+});
+
+// 작업 목록 로드
+function loadJobs() {
+    const tableBody = document.getElementById('jobs-table-body');
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">로딩 중...</td></tr>';
+    
+    fetch('/api/jobs')
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success' && Array.isArray(data.data)) {
+            if (data.data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">작업이 없습니다.</td></tr>';
+                return;
+            }
+            
+            tableBody.innerHTML = '';
+            data.data.forEach(job => {
+                const row = document.createElement('tr');
+                
+                // 진행률 계산
+                const progress = job.progress || 0;
+                
+                // 상태에 따른 배지 색상
+                let statusBadgeClass = 'bg-secondary';
+                if (job.status === 'running') statusBadgeClass = 'bg-primary';
+                else if (job.status === 'completed') statusBadgeClass = 'bg-success';
+                else if (job.status === 'failed') statusBadgeClass = 'bg-danger';
+                else if (job.status === 'paused') statusBadgeClass = 'bg-warning';
+                
+                // 작업 유형 한글화
+                let jobTypeText = job.job_type;
+                if (job.job_type === 'process_directory') jobTypeText = '디렉토리 처리';
+                else if (job.job_type === 'bulk_analyze') jobTypeText = '일괄 분석';
+                else if (job.job_type === 'generate_reports') jobTypeText = '보고서 생성';
+                
+                // 시간 포맷팅
+                const createdAt = new Date(job.created_at * 1000).toLocaleString();
+                
+                row.innerHTML = `
+                    <td>${job.id}</td>
+                    <td>${jobTypeText}</td>
+                    <td><span class="badge ${statusBadgeClass}">${job.status}</span></td>
+                    <td>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: ${progress}%;" 
+                                 aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
+                                ${progress}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>${createdAt}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-info view-job" data-job-id="${job.id}">
+                                상세보기
+                            </button>
+                            ${job.status === 'running' ? 
+                              `<button type="button" class="btn btn-warning pause-job" data-job-id="${job.id}">
+                                일시중지
+                               </button>` : ''}
+                            ${job.status === 'paused' ? 
+                              `<button type="button" class="btn btn-primary resume-job" data-job-id="${job.id}">
+                                재개
+                               </button>` : ''}
+                            ${['running', 'paused', 'queued'].includes(job.status) ? 
+                              `<button type="button" class="btn btn-danger cancel-job" data-job-id="${job.id}">
+                                취소
+                               </button>` : ''}
+                            ${['completed', 'failed', 'cancelled'].includes(job.status) ? 
+                              `<button type="button" class="btn btn-danger delete-job" data-job-id="${job.id}">
+                                삭제
+                               </button>` : ''}
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // 이벤트 리스너 추가
+            attachJobButtonEventListeners();
+        } else {
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">
+                작업 목록을 불러오는 중 오류가 발생했습니다: ${data.message || '알 수 없는 오류'}
+            </td></tr>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">
+            작업 목록을 불러오는 중 오류가 발생했습니다.
+        </td></tr>`;
+    });
+}
+
+// 작업 버튼 이벤트 리스너 추가
+function attachJobButtonEventListeners() {
+    // 작업 상세 정보 보기
+    document.querySelectorAll('.view-job').forEach(button => {
+        button.addEventListener('click', function() {
+            const jobId = this.getAttribute('data-job-id');
+            viewJobDetails(jobId);
+        });
+    });
+    
+    // 작업 일시 중지
+    document.querySelectorAll('.pause-job').forEach(button => {
+        button.addEventListener('click', function() {
+            const jobId = this.getAttribute('data-job-id');
+            updateJobStatus(jobId, 'pause');
+        });
+    });
+    
+    // 작업 재개
+    document.querySelectorAll('.resume-job').forEach(button => {
+        button.addEventListener('click', function() {
+            const jobId = this.getAttribute('data-job-id');
+            updateJobStatus(jobId, 'resume');
+        });
+    });
+    
+    // 작업 취소
+    document.querySelectorAll('.cancel-job').forEach(button => {
+        button.addEventListener('click', function() {
+            const jobId = this.getAttribute('data-job-id');
+            if (confirm('정말로 이 작업을 취소하시겠습니까?')) {
+                updateJobStatus(jobId, 'cancel');
+            }
+        });
+    });
+    
+    // 작업 삭제
+    document.querySelectorAll('.delete-job').forEach(button => {
+        button.addEventListener('click', function() {
+            const jobId = this.getAttribute('data-job-id');
+            if (confirm('정말로 이 작업을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                deleteJob(jobId);
+            }
+        });
+    });
+}
+
+// 작업 상세 정보 보기
+function viewJobDetails(jobId) {
+    const modalBody = document.getElementById('job-details-content');
+    modalBody.innerHTML = '<p class="text-center">로딩 중...</p>';
+    
+    const modal = new bootstrap.Modal(document.getElementById('job-details-modal'));
+    modal.show();
+    
+    fetch(`/api/jobs/${jobId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const job = data.data;
+            
+            // 작업 유형 한글화
+            let jobTypeText = job.job_type;
+            if (job.job_type === 'process_directory') jobTypeText = '디렉토리 처리';
+            else if (job.job_type === 'bulk_analyze') jobTypeText = '일괄 분석';
+            else if (job.job_type === 'generate_reports') jobTypeText = '보고서 생성';
+            
+            // 매개변수 정보 표시
+            let paramsHtml = '<p>매개변수 정보가 없습니다.</p>';
+            if (job.params && Object.keys(job.params).length > 0) {
+                paramsHtml = '<dl class="row">';
+                for (const [key, value] of Object.entries(job.params)) {
+                    paramsHtml += `
+                        <dt class="col-sm-3">${key}</dt>
+                        <dd class="col-sm-9">${
+                            Array.isArray(value) ? value.join(', ') : 
+                            typeof value === 'object' ? JSON.stringify(value) : 
+                            typeof value === 'boolean' ? (value ? '예' : '아니오') : 
+                            value
+                        }</dd>
+                    `;
+                }
+                paramsHtml += '</dl>';
+            }
+            
+            // 결과 정보 표시
+            let resultsHtml = '<p>결과 정보가 없습니다.</p>';
+            if (job.result && Object.keys(job.result).length > 0) {
+                resultsHtml = '<dl class="row">';
+                for (const [key, value] of Object.entries(job.result)) {
+                    resultsHtml += `
+                        <dt class="col-sm-3">${key}</dt>
+                        <dd class="col-sm-9">${
+                            Array.isArray(value) ? value.join(', ') : 
+                            typeof value === 'object' ? JSON.stringify(value) : 
+                            value
+                        }</dd>
+                    `;
+                }
+                resultsHtml += '</dl>';
+                
+                // 보고서 링크가 있으면 추가
+                if (job.result.report_url) {
+                    resultsHtml += `
+                        <div class="mt-3">
+                            <a href="${job.result.report_url}" class="btn btn-primary" target="_blank">
+                                보고서 보기
+                            </a>
+                        </div>
+                    `;
+                }
+            }
+            
+            modalBody.innerHTML = `
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h4>기본 정보</h4>
+                        <dl class="row">
+                            <dt class="col-sm-4">작업 ID</dt>
+                            <dd class="col-sm-8">${job.id}</dd>
+                            
+                            <dt class="col-sm-4">작업 유형</dt>
+                            <dd class="col-sm-8">${jobTypeText}</dd>
+                            
+                            <dt class="col-sm-4">상태</dt>
+                            <dd class="col-sm-8">${job.status}</dd>
+                            
+                            <dt class="col-sm-4">진행률</dt>
+                            <dd class="col-sm-8">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: ${job.progress || 0}%;" 
+                                         aria-valuenow="${job.progress || 0}" aria-valuemin="0" aria-valuemax="100">
+                                        ${job.progress || 0}%
+                                    </div>
+                                </div>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>시간 정보</h4>
+                        <dl class="row">
+                            <dt class="col-sm-4">생성 시간</dt>
+                            <dd class="col-sm-8">${new Date(job.created_at * 1000).toLocaleString()}</dd>
+                            
+                            <dt class="col-sm-4">시작 시간</dt>
+                            <dd class="col-sm-8">${job.started_at ? new Date(job.started_at * 1000).toLocaleString() : '-'}</dd>
+                            
+                            <dt class="col-sm-4">완료 시간</dt>
+                            <dd class="col-sm-8">${job.completed_at ? new Date(job.completed_at * 1000).toLocaleString() : '-'}</dd>
+                            
+                            <dt class="col-sm-4">소요 시간</dt>
+                            <dd class="col-sm-8">${job.duration ? job.duration + '초' : '-'}</dd>
+                        </dl>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>매개변수</h4>
+                        ${paramsHtml}
+                    </div>
+                    <div class="col-md-6">
+                        <h4>결과</h4>
+                        ${resultsHtml}
+                    </div>
+                </div>
+                
+                ${job.error ? `
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h4 class="text-danger">오류 정보</h4>
+                        <div class="alert alert-danger">
+                            ${job.error}
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+        } else {
+            modalBody.innerHTML = `<div class="alert alert-danger">
+                작업 상세 정보를 불러오는 중 오류가 발생했습니다: ${data.message || '알 수 없는 오류'}
+            </div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        modalBody.innerHTML = `<div class="alert alert-danger">
+            작업 상세 정보를 불러오는 중 오류가 발생했습니다.
+        </div>`;
+    });
+}
+
+// 작업 상태 업데이트 (일시 중지, 재개, 취소 등)
+function updateJobStatus(jobId, action) {
+    fetch(`/api/jobs/${jobId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: action })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            loadJobs(); // 작업 목록 새로고침
+        } else {
+            alert('작업 상태 업데이트 중 오류가 발생했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('작업 상태 업데이트 중 오류가 발생했습니다.');
+    });
+}
+
+// 작업 삭제
+function deleteJob(jobId) {
+    fetch(`/api/jobs/${jobId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            loadJobs(); // 작업 목록 새로고침
+        } else {
+            alert('작업 삭제 중 오류가 발생했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('작업 삭제 중 오류가 발생했습니다.');
+    });
+}
+
+// 새로고침 버튼 이벤트 리스너
+document.getElementById('refresh-jobs').addEventListener('click', loadJobs);
+
+// 페이지 로드시 작업 목록 로드
+document.addEventListener('DOMContentLoaded', loadJobs);
+
+// 주기적으로 작업 목록 새로고침 (30초마다)
+setInterval(loadJobs, 30000);
+</script>
+{% endblock %}

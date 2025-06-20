@@ -1,0 +1,757 @@
+{% extends "base.html" %}
+
+{% block title %} - 문서 뷰어{% endblock %}
+
+{% block extra_css %}
+<style>
+    .highlight {
+        background-color: #fef3c7;
+        padding: 0.1em 0.2em;
+        border-radius: 0.2em;
+    }
+    
+    .highlight-active {
+        background-color: #fcd34d !important;
+        animation: pulse 0.5s ease-in-out;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .document-content {
+        font-family: 'Noto Sans KR', system-ui, sans-serif;
+        line-height: 1.7;
+        word-wrap: break-word;
+    }
+    
+    .document-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .document-content h1, .document-content h2, .document-content h3 {
+        color: #1f2937;
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 0.5rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .document-content h1 { font-size: 1.875rem; font-weight: 700; }
+    .document-content h2 { font-size: 1.5rem; font-weight: 600; }
+    .document-content h3 { font-size: 1.25rem; font-weight: 600; }
+    
+    .document-content table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .document-content table th {
+        background-color: #3b82f6;
+        color: white;
+        font-weight: 600;
+        text-align: center;
+        padding: 0.75rem;
+    }
+    
+    .document-content table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+    }
+    
+    .document-content table tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+    
+    .document-content p {
+        margin-bottom: 1rem;
+        text-align: justify;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    
+    .document-content ul, .document-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .document-content li {
+        margin-bottom: 0.5rem;
+        line-height: 1.7;
+    }
+    
+    .document-content strong {
+        color: #1f2937;
+        font-weight: 600;
+    }
+    
+    .document-content em {
+        color: #6b7280;
+        font-style: italic;
+    }
+    
+    .document-content .image-placeholder {
+        background-color: #f3f4f6;
+        border: 2px dashed #d1d5db;
+        padding: 1.5rem;
+        text-align: center;
+        margin: 1rem 0;
+        border-radius: 0.5rem;
+        color: #6b7280;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 문서 뷰어 -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="bg-primary-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+        <h2 class="text-xl font-semibold flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span id="documentTitle">문서 뷰어</span>
+        </h2>
+        <div class="flex space-x-2">
+            <button type="button" class="inline-flex items-center px-3 py-1 border border-white border-opacity-20 text-sm font-medium rounded-md text-white hover:bg-white hover:bg-opacity-10 transition-colors" id="downloadBtn">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                다운로드
+            </button>
+            <button type="button" class="inline-flex items-center px-3 py-1 border border-white border-opacity-20 text-sm font-medium rounded-md text-white hover:bg-white hover:bg-opacity-10 transition-colors" id="printBtn">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                인쇄
+            </button>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-4 min-h-screen">
+        <!-- 메인 문서 영역 -->
+        <div class="lg:col-span-3 p-6">
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center space-x-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800" id="documentType">PDF</span>
+                        <span class="text-sm text-gray-500" id="documentInfo">파일 크기: 1.2MB | 페이지: 5 | 업로드: 2025-05-17</span>
+                    </div>
+                    <div class="flex items-center space-x-1 bg-gray-100 rounded-md p-1">
+                        <button type="button" class="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded transition-colors" id="zoomOut" title="축소">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path>
+                            </svg>
+                        </button>
+                        <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-white rounded transition-colors" id="zoomReset">
+                            100%
+                        </button>
+                        <button type="button" class="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded transition-colors" id="zoomIn" title="확대">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 문서 컨테이너 -->
+            <div class="relative border border-gray-200 rounded-lg bg-white min-h-96 max-h-screen overflow-y-auto p-6">
+                <div class="document-content" id="documentContent">
+                    <div class="flex flex-col items-center justify-center py-20">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-4"></div>
+                        <p class="text-gray-600">문서를 불러오는 중입니다...</p>
+                    </div>
+                </div>
+                
+                <!-- 일치 항목 내비게이션 -->
+                <div class="absolute top-4 right-4 flex flex-col space-y-1">
+                    <button type="button" class="p-2 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 transition-colors" id="prevMatch" title="이전 일치 항목">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                    </button>
+                    <button type="button" class="p-2 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 transition-colors" id="nextMatch" title="다음 일치 항목">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- 페이지 내비게이션 -->
+                <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-4 bg-black bg-opacity-60 text-white px-4 py-2 rounded-full">
+                    <button type="button" class="flex items-center space-x-2 px-3 py-1 text-sm font-medium hover:bg-white hover:bg-opacity-20 rounded-full transition-colors" id="prevPage">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                        <span>이전</span>
+                    </button>
+                    <span class="px-2 py-1 text-sm font-medium" id="pageIndicator">1 / 5</span>
+                    <button type="button" class="flex items-center space-x-2 px-3 py-1 text-sm font-medium hover:bg-white hover:bg-opacity-20 rounded-full transition-colors" id="nextPage">
+                        <span>다음</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 사이드바 -->
+        <div class="lg:col-span-1 border-l border-gray-200 bg-gray-50">
+            <div class="p-6 space-y-6">
+                <!-- 문서 내 검색 -->
+                <div>
+                    <div class="flex space-x-2">
+                        <input type="text" class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" id="searchInDocument" placeholder="문서 내 검색...">
+                        <button class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" type="button" id="searchInDocumentBtn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 일치 항목 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-sm font-semibold text-gray-900">일치 항목</h3>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800" id="matchCount">0</span>
+                    </div>
+                    <div class="max-h-64 overflow-y-auto" id="matchesList">
+                        <div class="flex flex-col items-center justify-center py-8 text-center">
+                            <svg class="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500">일치 항목이 없습니다.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 문서 정보 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="px-4 py-3 border-b border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-900">문서 정보</h3>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div class="grid grid-cols-1 gap-3 text-sm">
+                            <div>
+                                <span class="font-medium text-gray-500">파일명:</span>
+                                <div class="mt-1 text-gray-900 truncate" id="documentFilename">document.pdf</div>
+                            </div>
+                            <div>
+                                <span class="font-medium text-gray-500">파일 유형:</span>
+                                <div class="mt-1 text-gray-900" id="documentFileType">PDF</div>
+                            </div>
+                            <div>
+                                <span class="font-medium text-gray-500">크기:</span>
+                                <div class="mt-1 text-gray-900" id="documentSize">1.2MB</div>
+                            </div>
+                            <div>
+                                <span class="font-medium text-gray-500">업로드 일시:</span>
+                                <div class="mt-1 text-gray-900" id="documentUploadDate">2025-05-17 14:30</div>
+                            </div>
+                            <div>
+                                <span class="font-medium text-gray-500">페이지 수:</span>
+                                <div class="mt-1 text-gray-900" id="documentPageCount">5</div>
+                            </div>
+                            <div>
+                                <span class="font-medium text-gray-500">작성자:</span>
+                                <div class="mt-1 text-gray-900" id="documentAuthor">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const docId = '{{ doc_id }}';
+    let currentPage = 1;
+    let totalPages = 1;
+    let matches = [];
+    let currentMatchIndex = -1;
+    let zoomLevel = 100;
+    
+    // 문서 로드
+    loadDocument(docId);
+    
+    // 문서 로드 함수
+    function loadDocument(id) {
+        fetch(`/api/documents/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    displayDocument(data.data);
+                } else {
+                    showError('문서를 불러올 수 없습니다: ' + (data.message || '알 수 없는 오류'));
+                }
+            })
+            .catch(error => {
+                showError('문서를 불러올 수 없습니다: ' + error.message);
+            });
+    }
+    
+    // 문서 표시 함수
+    function displayDocument(docData) {
+        // 문서 메타데이터 업데이트
+        document.getElementById('documentTitle').textContent = docData.filename;
+        document.getElementById('documentType').textContent = (docData.filetype || 'unknown').toUpperCase();
+        document.getElementById('documentInfo').textContent = `파일 크기: ${formatFileSize(docData.size)} | 페이지: ${docData.pages || 1} | 업로드: ${new Date(docData.uploaded_at).toLocaleDateString()}`;
+        document.getElementById('documentFilename').textContent = docData.filename;
+        document.getElementById('documentFileType').textContent = (docData.filetype || 'unknown').toUpperCase();
+        document.getElementById('documentSize').textContent = formatFileSize(docData.size);
+        document.getElementById('documentUploadDate').textContent = new Date(docData.uploaded_at).toLocaleString();
+        document.getElementById('documentPageCount').textContent = docData.pages || 1;
+        document.getElementById('documentAuthor').textContent = docData.author || '-';
+        
+        // 페이지 네비게이션 업데이트
+        totalPages = docData.pages || 1;
+        updatePageIndicator();
+        
+        // 문서 내용 표시
+        displayPage(currentPage);
+        
+        // 일치 항목 표시
+        if (docData.matches && docData.matches.length > 0) {
+            matches = docData.matches;
+            displayMatches(matches);
+        } else {
+            document.getElementById('matchesList').innerHTML = `
+                <div class="flex flex-col items-center justify-center py-8 text-center">
+                    <svg class="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <p class="text-sm text-gray-500">일치 항목이 없습니다.</p>
+                </div>
+            `;
+            document.getElementById('matchCount').textContent = '0';
+        }
+    }
+    
+    // 페이지 표시 함수
+    function displayPage(pageNum) {
+        fetch(`/api/documents/${docId}/pages/${pageNum}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const contentDiv = document.getElementById('documentContent');
+                    
+                    if (data.data.content_type === 'html') {
+                        // 마크다운 내용을 HTML로 변환
+                        const htmlContent = convertMarkdownToHtml(data.data.content);
+                        contentDiv.innerHTML = htmlContent;
+                    } else if (data.data.content_type === 'text') {
+                        contentDiv.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;">${data.data.content}</pre>`;
+                    } else if (data.data.content_type === 'image') {
+                        contentDiv.innerHTML = `<img src="${data.data.content_url}" alt="Page ${pageNum}" class="img-fluid">`;
+                    } else {
+                        // 기본값으로 마크다운 처리
+                        const htmlContent = convertMarkdownToHtml(data.data.content);
+                        contentDiv.innerHTML = htmlContent;
+                    }
+                    
+                    // 일치 항목 강조 표시
+                    highlightMatches();
+                    
+                    // 페이지 표시기 업데이트
+                    currentPage = pageNum;
+                    updatePageIndicator();
+                } else {
+                    showError('페이지를 불러올 수 없습니다: ' + (data.message || '알 수 없는 오류'));
+                }
+            })
+            .catch(error => {
+                showError('페이지를 불러올 수 없습니다: ' + error.message);
+            });
+    }
+    
+    // 일치 항목 표시 함수
+    function displayMatches(matchesList) {
+        const matchesContainer = document.getElementById('matchesList');
+        const matchCount = document.getElementById('matchCount');
+        
+        matchCount.textContent = matchesList.length;
+        matchesContainer.innerHTML = '';
+        
+        matchesList.forEach((match, index) => {
+            const matchItem = document.createElement('a');
+            matchItem.href = '#';
+            matchItem.className = 'block px-4 py-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors';
+            matchItem.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs text-gray-500">페이지 ${match.page || 1}</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">${index + 1}/${matchesList.length}</span>
+                </div>
+                <p class="text-sm text-gray-700 line-clamp-2">...${match.context_before}<span class="bg-yellow-200 px-1 rounded">${match.text}</span>${match.context_after}...</p>
+            `;
+            
+            matchItem.addEventListener('click', function(e) {
+                e.preventDefault();
+                goToMatch(index);
+            });
+            
+            matchesContainer.appendChild(matchItem);
+        });
+    }
+    
+    // 일치 항목으로 이동 함수
+    function goToMatch(index) {
+        if (index < 0 || index >= matches.length) return;
+        
+        currentMatchIndex = index;
+        const match = matches[index];
+        
+        // 해당 페이지로 이동
+        if (match.page && match.page !== currentPage) {
+            displayPage(match.page);
+        }
+        
+        // 일치 항목 목록에서 활성화
+        const matchItems = document.querySelectorAll('#matchesList a');
+        matchItems.forEach(item => {
+            item.classList.remove('bg-primary-50', 'border-primary-200');
+            item.classList.add('hover:bg-gray-50');
+        });
+        if (matchItems[index]) {
+            matchItems[index].classList.remove('hover:bg-gray-50');
+            matchItems[index].classList.add('bg-primary-50', 'border-primary-200');
+            matchItems[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // 문서에서 해당 일치 항목으로 스크롤
+        setTimeout(() => {
+            const highlightElements = document.querySelectorAll('.highlight');
+            if (highlightElements.length > index) {
+                highlightElements[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                highlightElements[index].classList.add('highlight-active');
+                setTimeout(() => {
+                    highlightElements[index].classList.remove('highlight-active');
+                }, 2000);
+            }
+        }, 500);
+    }
+    
+    // 일치 항목 강조 표시 함수
+    function highlightMatches() {
+        if (matches.length === 0) return;
+        
+        const content = document.getElementById('documentContent');
+        const pageMatches = matches.filter(match => match.page === currentPage);
+        
+        // 텍스트 노드 처리 함수
+        function processTextNode(textNode, match) {
+            const text = textNode.nodeValue;
+            const matchText = match.text;
+            const index = text.indexOf(matchText);
+            
+            if (index === -1) return false;
+            
+            const before = text.substring(0, index);
+            const after = text.substring(index + matchText.length);
+            
+            const span = document.createElement('span');
+            span.className = 'highlight';
+            span.textContent = matchText;
+            
+            const fragment = document.createDocumentFragment();
+            if (before) fragment.appendChild(document.createTextNode(before));
+            fragment.appendChild(span);
+            if (after) fragment.appendChild(document.createTextNode(after));
+            
+            textNode.parentNode.replaceChild(fragment, textNode);
+            return true;
+        }
+        
+        // 재귀적으로 노드 탐색
+        function traverseNodes(node, match) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                return processTextNode(node, match);
+            }
+            
+            if (node.nodeType === Node.ELEMENT_NODE && !['script', 'style'].includes(node.nodeName.toLowerCase())) {
+                const childNodes = Array.from(node.childNodes);
+                for (const childNode of childNodes) {
+                    if (traverseNodes(childNode, match)) {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        }
+        
+        // 각 일치 항목에 대해 처리
+        pageMatches.forEach(match => {
+            traverseNodes(content, match);
+        });
+    }
+    
+    // 페이지 표시기 업데이트 함수
+    function updatePageIndicator() {
+        document.getElementById('pageIndicator').textContent = `${currentPage} / ${totalPages}`;
+        document.getElementById('prevPage').disabled = currentPage <= 1;
+        document.getElementById('nextPage').disabled = currentPage >= totalPages;
+    }
+    
+    // 에러 표시 함수
+    function showError(message) {
+        document.getElementById('documentContent').innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-800">${message}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 파일 크기 포맷 함수
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // 이벤트 리스너 설정
+    document.getElementById('prevPage').addEventListener('click', function() {
+        if (currentPage > 1) {
+            displayPage(currentPage - 1);
+        }
+    });
+    
+    document.getElementById('nextPage').addEventListener('click', function() {
+        if (currentPage < totalPages) {
+            displayPage(currentPage + 1);
+        }
+    });
+    
+    document.getElementById('prevMatch').addEventListener('click', function() {
+        if (currentMatchIndex > 0) {
+            goToMatch(currentMatchIndex - 1);
+        } else if (matches.length > 0) {
+            goToMatch(matches.length - 1);
+        }
+    });
+    
+    document.getElementById('nextMatch').addEventListener('click', function() {
+        if (currentMatchIndex < matches.length - 1) {
+            goToMatch(currentMatchIndex + 1);
+        } else if (matches.length > 0) {
+            goToMatch(0);
+        }
+    });
+    
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+        window.location.href = `/api/documents/${docId}/download`;
+    });
+    
+    document.getElementById('printBtn').addEventListener('click', function() {
+        window.print();
+    });
+    
+    document.getElementById('searchInDocumentBtn').addEventListener('click', function() {
+        const searchText = document.getElementById('searchInDocument').value.trim();
+        if (searchText) {
+            searchInDocument(searchText);
+        }
+    });
+    
+    document.getElementById('searchInDocument').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const searchText = this.value.trim();
+            if (searchText) {
+                searchInDocument(searchText);
+            }
+        }
+    });
+    
+    document.getElementById('zoomIn').addEventListener('click', function() {
+        zoomLevel += 10;
+        applyZoom();
+    });
+    
+    document.getElementById('zoomOut').addEventListener('click', function() {
+        if (zoomLevel > 50) {
+            zoomLevel -= 10;
+            applyZoom();
+        }
+    });
+    
+    document.getElementById('zoomReset').addEventListener('click', function() {
+        zoomLevel = 100;
+        applyZoom();
+    });
+    
+    // 문서 내 검색 함수
+    function searchInDocument(text) {
+        fetch(`/api/documents/${docId}/search`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ query: text })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                matches = data.data.matches;
+                displayMatches(matches);
+                if (matches.length > 0) {
+                    goToMatch(0);
+                }
+            } else {
+                document.getElementById('matchesList').innerHTML = `
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 m-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-800">검색 결과가 없습니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('matchCount').textContent = '0';
+            }
+        })
+        .catch(error => {
+            console.error('검색 중 오류 발생:', error);
+        });
+    }
+    
+    // 줌 적용 함수
+    function applyZoom() {
+        const content = document.getElementById('documentContent');
+        content.style.transform = `scale(${zoomLevel / 100})`;
+        content.style.transformOrigin = 'top left';
+        document.getElementById('zoomReset').textContent = `${zoomLevel}%`;
+    }
+    
+    // 마크다운을 HTML로 변환하는 함수
+    function convertMarkdownToHtml(markdown) {
+        if (!markdown) return '';
+        
+        let html = markdown;
+        
+        // 이미지 주석 변환 (이스케이프 전에 처리)
+        html = html.replace(/<!-- image -->/g, '<div class="image-placeholder"><i class="bi bi-image"></i> 이미지</div>');
+        
+        // 테이블 변환 (이스케이프 전에 처리)
+        html = convertMarkdownTables(html);
+        
+        // HTML 이스케이프 처리 (보안) - 단, 이미 변환된 HTML 태그는 제외
+        // 특수 문자만 이스케이프
+        html = html.replace(/&(?!amp;|lt;|gt;|quot;|#)/g, '&amp;');
+        
+        // 헤더 변환 (## 제목 -> <h2>제목</h2>)
+        html = html.replace(/^## (.+)$/gm, '<h2 class="mt-4 mb-3">$1</h2>');
+        html = html.replace(/^# (.+)$/gm, '<h1 class="mt-4 mb-3">$1</h1>');
+        html = html.replace(/^### (.+)$/gm, '<h3 class="mt-3 mb-2">$1</h3>');
+        
+        // 볼드 텍스트 (**텍스트** -> <strong>텍스트</strong>) - 더 정확한 패턴
+        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        
+        // 이탤릭 텍스트 (*텍스트* -> <em>텍스트</em>) - 더 정확한 패턴
+        html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+        
+        // 리스트 변환
+        html = convertMarkdownLists(html);
+        
+        // 줄바꿈 처리 - 연속된 줄바꿈을 단락으로 변환
+        html = html.replace(/\n\s*\n/g, '</p><p>');
+        html = html.replace(/\n/g, '<br>');
+        
+        // 단락 태그로 감싸기
+        html = '<p>' + html + '</p>';
+        
+        // 빈 단락 및 불필요한 태그 정리
+        html = html.replace(/<p><\/p>/g, '');
+        html = html.replace(/<p>\s*<br>\s*<\/p>/g, '');
+        html = html.replace(/<br>\s*<\/p>/g, '</p>');
+        html = html.replace(/<p>\s*<br>/g, '<p>');
+        
+        return `<div class="document-content" style="line-height: 1.8; font-size: 14px; white-space: pre-wrap;">${html}</div>`;
+    }
+    
+    // 마크다운 테이블을 HTML로 변환
+    function convertMarkdownTables(text) {
+        const tableRegex = /(\|.+\|\n)+/g;
+        
+        return text.replace(tableRegex, function(match) {
+            const lines = match.trim().split('\n');
+            if (lines.length < 2) return match;
+            
+            let html = '<table class="table table-bordered table-striped mt-3 mb-3">';
+            
+            // 헤더 행 처리 - trim()을 제거하여 띄어쓰기 보존
+            const headerCells = lines[0].split('|').slice(1, -1);
+            if (headerCells.length > 0) {
+                html += '<thead class="table-dark"><tr>';
+                headerCells.forEach(cell => {
+                    // 앞뒤 공백만 제거하고 내부 띄어쓰기는 보존
+                    const trimmedCell = cell.replace(/^\s+|\s+$/g, '');
+                    html += `<th>${trimmedCell}</th>`;
+                });
+                html += '</tr></thead>';
+            }
+            
+            // 구분선 건너뛰고 데이터 행 처리
+            html += '<tbody>';
+            for (let i = 2; i < lines.length; i++) {
+                const cells = lines[i].split('|').slice(1, -1);
+                if (cells.length > 0) {
+                    html += '<tr>';
+                    cells.forEach(cell => {
+                        // 앞뒤 공백만 제거하고 내부 띄어쓰기는 보존
+                        const trimmedCell = cell.replace(/^\s+|\s+$/g, '');
+                        html += `<td>${trimmedCell}</td>`;
+                    });
+                    html += '</tr>';
+                }
+            }
+            html += '</tbody></table>';
+            
+            return html;
+        });
+    }
+    
+    // 마크다운 리스트를 HTML로 변환
+    function convertMarkdownLists(text) {
+        // 순서 없는 리스트
+        text = text.replace(/^- (.+)$/gm, '<li>$1</li>');
+        text = text.replace(/(<li>.*<\/li>)/s, '<ul class="mb-3">$1</ul>');
+        
+        // 순서 있는 리스트
+        text = text.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+        
+        return text;
+    }
+});
+</script>
+{% endblock %}

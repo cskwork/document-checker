@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %} - 홈{% endblock %}
+
+{% block content %}
+<!-- 대시보드 헤더 -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="bg-primary-600 text-white px-6 py-4 rounded-t-lg">
+        <h2 class="text-xl font-semibold flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+            </svg>
+            문서 검사기 대시보드
+        </h2>
+    </div>
+    <div class="p-6">
+        <!-- 통계 카드 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 text-center border border-blue-200">
+                <div class="text-4xl font-bold text-blue-600 mb-2" id="totalDocuments">0</div>
+                <p class="text-blue-700 font-medium">총 문서 수</p>
+            </div>
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 text-center border border-green-200">
+                <div class="text-4xl font-bold text-green-600 mb-2" id="processedDocuments">0</div>
+                <p class="text-green-700 font-medium">처리된 문서</p>
+            </div>
+            <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-6 text-center border border-yellow-200">
+                <div class="text-4xl font-bold text-yellow-600 mb-2" id="pendingDocuments">0</div>
+                <p class="text-yellow-700 font-medium">대기 중인 문서</p>
+            </div>
+            <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6 text-center border border-red-200">
+                <div class="text-4xl font-bold text-red-600 mb-2" id="errorDocuments">0</div>
+                <p class="text-red-700 font-medium">오류 문서</p>
+            </div>
+        </div>
+                
+        <!-- 최근 문서 및 검색 기록 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- 최근 문서 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">최근 문서</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">문서명</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">업로드 일시</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentDocuments" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="3" class="px-6 py-4 text-center text-gray-500">문서가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 최근 검색 기록 -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-900">최근 검색 기록</h3>
+                    <a href="{{ url_for('search_page') }}" class="inline-flex items-center px-3 py-1 border border-primary-300 text-sm font-medium rounded-md text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors">
+                        전체 보기
+                    </a>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    <div class="px-6 py-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-gray-900">검색어: <strong class="text-primary-600">중요 문서</strong></span>
+                            <span class="text-sm text-gray-500">방금 전</span>
+                        </div>
+                        <div class="text-sm text-gray-600">3개 문서에서 12개 일치 항목 발견</div>
+                    </div>
+                    <div class="px-6 py-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-gray-900">검색어: <strong class="text-primary-600">개인정보</strong></span>
+                            <span class="text-sm text-gray-500">1시간 전</span>
+                        </div>
+                        <div class="text-sm text-gray-600">5개 문서에서 8개 일치 항목 발견</div>
+                    </div>
+                    <div class="px-6 py-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-gray-900">검색어: <strong class="text-primary-600">계약서</strong></span>
+                            <span class="text-sm text-gray-500">3시간 전</span>
+                        </div>
+                        <div class="text-sm text-gray-600">2개 문서에서 5개 일치 항목 발견</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                
+        <!-- 문서 유형별 분포 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">문서 유형별 분포</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <canvas id="documentTypeChart" class="w-full h-64"></canvas>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-700 font-medium">PDF</span>
+                            <span class="text-gray-900 font-bold">45%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-blue-500 h-3 rounded-full" style="width: 45%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-700 font-medium">DOCX</span>
+                            <span class="text-gray-900 font-bold">30%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-green-500 h-3 rounded-full" style="width: 30%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-700 font-medium">XLSX</span>
+                            <span class="text-gray-900 font-bold">15%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-yellow-500 h-3 rounded-full" style="width: 15%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-700 font-medium">기타</span>
+                            <span class="text-gray-900 font-bold">10%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-red-500 h-3 rounded-full" style="width: 10%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // 문서 유형 차트
+    document.addEventListener('DOMContentLoaded', function() {
+        // 대시보드 통계 데이터 로드
+        loadDashboardStats();
+        
+        // 문서 유형 차트 초기화
+        const ctx = document.getElementById('documentTypeChart').getContext('2d');
+        const documentTypeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['PDF', 'DOCX', 'XLSX', 'TXT', '기타'],
+                datasets: [{
+                    data: [45, 30, 15, 7, 3],
+                    backgroundColor: [
+                        '#0d6efd',
+                        '#198754',
+                        '#ffc107',
+                        '#6c757d',
+                        '#dc3545'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                return `${label}: ${value}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 문서 업로드 버튼 이벤트는 base.html에서 처리됨
+        
+        // 문서 업로드 폼 제출
+        document.getElementById('submitUpload').addEventListener('click', function() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('파일을 선택해주세요.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const progressBar = document.getElementById('progressBar');
+            const progressContainer = document.getElementById('uploadProgress');
+            
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            
+            // 파일 업로드 요청
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    progressBar.style.width = '100%';
+                    progressBar.classList.remove('bg-primary-600');
+                    progressBar.classList.add('bg-green-500');
+                    
+                    // 성공 메시지 표시
+                    setTimeout(() => {
+                        const uploadModal = document.getElementById('uploadModal');
+                        uploadModal.classList.add('hidden');
+                        
+                        // 페이지 새로고침
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error(data.message || '파일 업로드 중 오류가 발생했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                progressBar.classList.remove('bg-primary-600');
+                progressBar.classList.add('bg-red-500');
+                alert(error.message || '파일 업로드 중 오류가 발생했습니다.');
+            });
+        });
+    });
+    
+    // 대시보드 통계 로드 함수
+    function loadDashboardStats() {
+        // 실제 API 엔드포인트로 대체 필요
+        fetch('/api/documents/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // 문서 통계 업데이트
+                    document.getElementById('totalDocuments').textContent = data.data.total || 0;
+                    document.getElementById('processedDocuments').textContent = data.data.processed || 0;
+                    document.getElementById('pendingDocuments').textContent = data.data.pending || 0;
+                    document.getElementById('errorDocuments').textContent = data.data.error || 0;
+                    
+                    // 최근 문서 목록 업데이트
+                    updateRecentDocuments(data.data.recentDocuments || []);
+                }
+            })
+            .catch(error => {
+                console.error('대시보드 통계를 불러오는 중 오류가 발생했습니다:', error);
+            });
+    }
+    
+    // 최근 문서 목록 업데이트 함수
+    function updateRecentDocuments(documents) {
+        const tbody = document.getElementById('recentDocuments');
+        
+        if (documents.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">문서가 없습니다.</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        documents.forEach(doc => {
+            let statusBadge = '';
+            switch(doc.status) {
+                case 'processed':
+                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">처리 완료</span>';
+                    break;
+                case 'processing':
+                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">처리 중</span>';
+                    break;
+                case 'error':
+                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">오류</span>';
+                    break;
+                default:
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">${doc.status}</span>`;
+            }
+            
+            html += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <a href="/view/document/${doc.id}" class="text-primary-600 hover:text-primary-900 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            ${doc.filename}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(doc.uploaded_at).toLocaleString()}</td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+</script>
+{% endblock %}
