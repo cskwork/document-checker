@@ -65,7 +65,7 @@
         <div class="mb-8">
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">검색 결과 요약</h2>
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p class="text-lg text-blue-800">총 <span class="font-semibold">{{ results.documents|length }}개</span>의 문서에서 <span class="font-semibold">{{ results.matchCount }}건</span>의 일치 항목을 찾았습니다.</p>
+                <p class="text-lg text-blue-800">총 <span class="font-semibold">{{ documents|length }}개</span>의 문서에서 <span class="font-semibold">{{ results.matchCount }}건</span>의 일치 항목을 찾았습니다.</p>
             </div>
         </div>
         
@@ -81,19 +81,28 @@
                             <span class="ml-2 text-gray-900">{{ match.documentId }}</span>
                         </div>
                         <div>
-                            <span class="text-sm font-medium text-gray-600">일치한 필드:</span>
-                            <span class="ml-2 text-gray-900">{{ match.fieldName }}</span>
+                            <span class="text-sm font-medium text-gray-600">일치한 패턴:</span>
+                            <span class="ml-2 text-gray-900">{{ match.pattern if match.pattern is defined else '텍스트' }}</span>
                         </div>
                     </div>
                     <div class="mb-3">
                         <span class="text-sm font-medium text-gray-600">일치한 텍스트:</span>
-                        <div class="mt-1 p-2 bg-white border border-gray-200 rounded text-gray-900">{{ match.matchedText|safe }}</div>
+                        <div class="mt-1 p-2 bg-white border border-gray-200 rounded text-gray-900">{{ match.text|safe if match.text is defined else match.matchedText|safe }}</div>
                     </div>
                     <div class="mb-3">
                         <span class="text-sm font-medium text-gray-600">점수:</span>
-                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ "%.2f"|format(match.score * 100) }}%</span>
+                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ "%.2f"|format((match.score if match.score is defined else 1.0) * 100) }}%</span>
                     </div>
-                    {% if match.context %}
+                    {% if match.context_before is defined or match.context_after is defined %}
+                    <div>
+                        <span class="text-sm font-medium text-gray-600">주변 맥락:</span>
+                        <div class="mt-1 p-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">
+                            {{ match.context_before|safe if match.context_before is defined else '' }}
+                            <mark class="bg-yellow-200">{{ match.text|safe if match.text is defined else '' }}</mark>
+                            {{ match.context_after|safe if match.context_after is defined else '' }}
+                        </div>
+                    </div>
+                    {% elif match.context %}
                     <div>
                         <span class="text-sm font-medium text-gray-600">주변 맥락:</span>
                         <div class="mt-1 p-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">{{ match.context|safe }}</div>
@@ -122,7 +131,7 @@
                         </div>
                         <div>
                             <span class="text-sm font-medium text-gray-500">파일 형식:</span>
-                            <p class="mt-1 text-gray-900">{{ doc.fileType or '알 수 없음' }}</p>
+                            <p class="mt-1 text-gray-900">{{ doc.format or doc.fileType or '알 수 없음' }}</p>
                         </div>
                         <div>
                             <span class="text-sm font-medium text-gray-500">생성 일시:</span>

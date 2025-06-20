@@ -314,7 +314,8 @@ class ContentAnalyzer:
                     'context_before': text[context_start:start],
                     'context_after': text[end:context_end],
                     'section': self._find_section(doc, start),
-                    'page': 'N/A' # 프론트엔드의 페이지 ${match.page || 'N/A'}, 현재 페이지 정보 추출 기능 부재로 N/A
+                    'page': 'N/A', # 프론트엔드의 페이지 ${match.page || 'N/A'}, 현재 페이지 정보 추출 기능 부재로 N/A
+                    'score': 1.0  # 기본 score 값 추가 (정확한 매치이므로 1.0)
                 })
                 print(f"[DEBUG] 매치 추가됨 - 현재 매치 수: {len(matches)}")
                 
