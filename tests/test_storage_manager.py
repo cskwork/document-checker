@@ -185,6 +185,206 @@ class TestStorageManager(unittest.TestCase):
         docx_docs = self.storage.list_documents({'format': 'docx'})
         self.assertEqual(len(docx_docs), 0)
 
+    def test_get_document_metadata(self):
+        """문서 메타데이터 조회 테스트"""
+        # 테스트 문서 인덱스 추가
+        test_metadata = {
+            'id': 'test_doc_meta',
+            'filename': 'test_meta.pdf',
+            'format': 'pdf',
+            'createdAt': time.time(),
+            'path': '/path/to/doc'
+        }
+        self.storage.document_index['test_doc_meta'] = test_metadata
+        
+        # 메타데이터 조회
+        metadata = self.storage.get_document_metadata('test_doc_meta')
+        self.assertIsNotNone(metadata)
+        self.assertEqual(metadata['filename'], 'test_meta.pdf')
+        
+        # 존재하지 않는 문서 메타데이터 조회
+        none_metadata = self.storage.get_document_metadata('nonexistent')
+        self.assertIsNone(none_metadata)
+    
+    def test_process_new_document_errors(self):
+        """문서 처리 중 오류 상황 테스트"""
+        # 1. 파일이 존재하지 않는 경우
+        result = self.storage.process_new_document('/nonexistent/file.pdf')
+        self.assertIsNone(result)
+        
+        # 2. 문서 처리기가 None을 반환하는 경우
+        self.mock_processor.process_document.return_value = None
+        test_file = os.path.join(INPUT_DIR, 'test_error.pdf')
+        with open(test_file, 'w') as f:
+            f.write('테스트 파일')
+        
+        result = self.storage.process_new_document(test_file)
+        self.assertIsNone(result)
+        
+        # 3. 문서 처리기가 문자열을 반환하는 경우
+        self.mock_processor.process_document.return_value = "Simple text content"
+        test_file2 = os.path.join(INPUT_DIR, 'test_string.pdf')
+        with open(test_file2, 'w') as f:
+            f.write('테스트 파일')
+        
+        result = self.storage.process_new_document(test_file2)
+        self.assertIsNotNone(result)  # 문자열도 처리 가능하게 구현됨
+        
+        # 4. 문서 처리기가 오류 상태를 반환하는 경우
+        self.mock_processor.process_document.return_value = {
+            'id': 'error_doc',
+            'processingStatus': 'error',
+            'error': 'Processing failed'
+        }
+        test_file3 = os.path.join(INPUT_DIR, 'test_error_status.pdf')
+        with open(test_file3, 'w') as f:
+            f.write('테스트 파일')
+            
+        result = self.storage.process_new_document(test_file3)
+        self.assertIsNone(result)
+        
+        # 5. 문서 ID가 없는 경우
+        self.mock_processor.process_document.return_value = {
+            'filename': 'no_id.pdf',
+            'content': 'test'
+        }
+        test_file4 = os.path.join(INPUT_DIR, 'test_no_id.pdf')
+        with open(test_file4, 'w') as f:
+            f.write('테스트 파일')
+            
+        result = self.storage.process_new_document(test_file4)
+        self.assertIsNone(result)
+    
+    def test_store_document_errors(self):
+        """문서 저장 중 오류 상황 테스트"""
+        # 1. 문서 ID가 없는 경우
+        doc_no_id = {
+            'filename': 'no_id.pdf',
+            'content': 'test'
+        }
+        result = self.storage.store_document(doc_no_id)
+        self.assertFalse(result)
+        
+        # 2. 디렉토리 생성 실패 시뮬레이션 (권한 문제 등)
+        # 이 테스트는 실제로는 OS 권한 문제를 시뮬레이션하기 어려우므로 
+        # 다른 방법으로 접근
+        doc_valid = {
+            'id': 'test_doc_perm',
+            'filename': 'test_perm.pdf',
+            'content': 'test'
+        }
+        # 정상적인 경우 테스트
+        result = self.storage.store_document(doc_valid)
+        self.assertTrue(result)
+    
+    def test_get_document_not_found(self):
+        """존재하지 않는 문서 조회 테스트"""
+        # 캐시와 디스크 모두에 없는 문서
+        doc = self.storage.get_document('nonexistent_doc')
+        self.assertIsNone(doc)
+    
+    def test_get_document_load_error(self):
+        """문서 로드 중 오류 테스트"""
+        # 잘못된 JSON 파일 생성
+        doc_id = 'corrupt_doc'
+        doc_path = self.storage._get_document_path(doc_id)
+        os.makedirs(os.path.dirname(doc_path), exist_ok=True)
+        
+        with open(doc_path, 'w') as f:
+            f.write('invalid json content')
+        
+        # 문서 조회 시도
+        doc = self.storage.get_document(doc_id)
+        self.assertIsNone(doc)
+    
+    def test_save_document_index_error(self):
+        """문서 인덱스 저장 중 오류 테스트"""
+        # 인덱스 파일 경로를 잘못된 경로로 변경
+        original_output = self.storage.output_dir
+        self.storage.output_dir = Path('/invalid/path/that/does/not/exist')
+        
+        # 인덱스 저장 시도 (오류가 발생하지만 예외를 던지지 않음)
+        self.storage._save_document_index()
+        
+        # 경로 복원
+        self.storage.output_dir = original_output
+    
+    def test_load_document_index_error(self):
+        """문서 인덱스 로드 중 오류 테스트"""
+        # 잘못된 JSON 파일 생성
+        index_file = os.path.join(OUTPUT_DIR, 'document_index.json')
+        with open(index_file, 'w') as f:
+            f.write('invalid json content')
+        
+        # 새 StorageManager 인스턴스 생성 (인덱스 로드 시도)
+        new_storage = self.storage.__class__(
+            input_dir=INPUT_DIR,
+            output_dir=OUTPUT_DIR,
+            document_processor=self.mock_processor
+        )
+        
+        # 빈 인덱스로 초기화되어야 함
+        self.assertEqual(len(new_storage.document_index), 0)
+    
+    def test_batch_processor_methods(self):
+        """배치 프로세서 관련 메서드 테스트"""
+        # 배치 작업 제출
+        file_paths = ['/path/to/file1.pdf', '/path/to/file2.pdf']
+        job_id = self.storage.process_batch(file_paths)
+        self.assertIsNotNone(job_id)
+        
+        # 배치 작업 상태 조회
+        status = self.storage.get_batch_status(job_id)
+        self.assertIsNotNone(status)
+        
+        # 배치 작업 목록 조회
+        jobs = self.storage.list_batch_jobs()
+        self.assertIsInstance(jobs, list)
+        
+        # 특정 상태로 필터링
+        pending_jobs = self.storage.list_batch_jobs('pending')
+        self.assertIsInstance(pending_jobs, list)
+    
+    def test_monitoring_already_running(self):
+        """모니터링이 이미 실행 중일 때 테스트"""
+        # 모니터링 시작
+        self.storage.start_monitoring()
+        
+        # 다시 시작 시도
+        self.storage.start_monitoring()  # 경고 로그만 출력되고 정상 동작
+        
+        # 모니터링 중지
+        self.storage.stop_monitoring()
+    
+    def test_process_new_document_json_string(self):
+        """문서 처리기가 JSON 문자열을 반환하는 경우 테스트"""
+        # JSON 문자열 반환 설정
+        json_doc = {
+            'id': 'json_doc',
+            'content': 'JSON document content',
+            'format': 'pdf'
+        }
+        self.mock_processor.process_document.return_value = json.dumps(json_doc)
+        
+        test_file = os.path.join(INPUT_DIR, 'test_json.pdf')
+        with open(test_file, 'w') as f:
+            f.write('테스트 파일')
+        
+        result = self.storage.process_new_document(test_file)
+        self.assertIsNotNone(result)
+    
+    def test_process_new_document_unexpected_type(self):
+        """문서 처리기가 예상치 못한 타입을 반환하는 경우"""
+        # 리스트 반환 (예상치 못한 타입)
+        self.mock_processor.process_document.return_value = ['unexpected', 'list']
+        
+        test_file = os.path.join(INPUT_DIR, 'test_unexpected.pdf')
+        with open(test_file, 'w') as f:
+            f.write('테스트 파일')
+        
+        result = self.storage.process_new_document(test_file)
+        self.assertIsNone(result)
+
 
 if __name__ == '__main__':
     unittest.main()

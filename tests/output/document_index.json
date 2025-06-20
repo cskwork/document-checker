@@ -40,5 +40,26 @@
     "format": "txt",
     "createdAt": "2025-06-20T11:11:13.795520",
     "path": "/Users/danny/Documents/Git/Tools/Augment-Web-Tool/document-checker/tests/output/documents/8f97e557-58fb-4476-ba4d-d02ff5253e73.json"
+  },
+  "96656370-8436-4ce2-bc8b-585018a34a9c": {
+    "id": "96656370-8436-4ce2-bc8b-585018a34a9c",
+    "filename": "test_document.txt",
+    "format": "txt",
+    "createdAt": "2025-06-20T11:17:30.166708",
+    "path": "/Users/danny/Documents/Git/Tools/Augment-Web-Tool/document-checker/tests/output/documents/96656370-8436-4ce2-bc8b-585018a34a9c.json"
+  },
+  "60adc08f-dfb6-43a2-a9ce-71a8b4ed1f8a": {
+    "id": "60adc08f-dfb6-43a2-a9ce-71a8b4ed1f8a",
+    "filename": "test_document.txt",
+    "format": "txt",
+    "createdAt": "2025-06-20T11:20:44.778699",
+    "path": "/Users/danny/Documents/Git/Tools/Augment-Web-Tool/document-checker/tests/output/documents/60adc08f-dfb6-43a2-a9ce-71a8b4ed1f8a.json"
+  },
+  "0dc8ffdf-f7a4-4ac4-80b8-6ac8acf0c01d": {
+    "id": "0dc8ffdf-f7a4-4ac4-80b8-6ac8acf0c01d",
+    "filename": "test_document.txt",
+    "format": "txt",
+    "createdAt": "2025-06-20T11:23:21.867309",
+    "path": "/Users/danny/Documents/Git/Tools/Augment-Web-Tool/document-checker/tests/output/documents/0dc8ffdf-f7a4-4ac4-80b8-6ac8acf0c01d.json"
   }
 }

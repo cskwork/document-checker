@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}JSON 보고서 뷰어 - {{ report_id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>JSON 보고서</h2>
+    <p class="text-muted">보고서 ID: {{ report_id }}</p>
+    
+    <div class="card">
+        <div class="card-header">
+            <button class="btn btn-sm btn-primary" onclick="downloadJSON()">다운로드</button>
+            <button class="btn btn-sm btn-secondary" onclick="copyToClipboard()">복사</button>
+        </div>
+        <div class="card-body">
+            <pre id="json-content" class="bg-light p-3">{{ report_data }}</pre>
+        </div>
+    </div>
+</div>
+
+<script>
+function downloadJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(document.getElementById('json-content').textContent);
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "report_{{ report_id }}.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+function copyToClipboard() {
+    const content = document.getElementById('json-content').textContent;
+    navigator.clipboard.writeText(content).then(function() {
+        alert('클립보드에 복사되었습니다!');
+    }, function(err) {
+        console.error('복사 실패:', err);
+    });
+}
+</script>
+{% endblock %} 

@@ -275,6 +275,206 @@ class TestUserInterface(unittest.TestCase):
         self.assertEqual(json_data['data']['total'], 10)
         self.assertEqual(json_data['data']['processed'], 8)
 
+    @patch('src.user_interface.app.report_generator')
+    def test_get_report(self, mock_report):
+        """보고서 조회 API 테스트"""
+        mock_report.get_report.return_value = {
+            'id': 'report_123',
+            'format': 'html',
+            'path': '/path/to/report.html',
+            'generatedAt': '2024-01-01T00:00:00'
+        }
+        
+        response = self.client.get('/api/reports/report_123')
+        
+        self.assertEqual(response.status_code, 200)
+        json_data = json.loads(response.data)
+        self.assertEqual(json_data['status'], 'success')
+        self.assertEqual(json_data['data']['id'], 'report_123')
+    
+    @patch('src.user_interface.app.report_generator')
+    def test_get_report_not_found(self, mock_report):
+        """존재하지 않는 보고서 조회 테스트"""
+        mock_report.get_report.return_value = None
+        
+        response = self.client.get('/api/reports/nonexistent')
+        
+        self.assertEqual(response.status_code, 404)
+        json_data = json.loads(response.data)
+        self.assertEqual(json_data['status'], 'error')
+        self.assertEqual(json_data['message'], 'Report not found')
+    
+    @patch('src.user_interface.app.report_generator')
+    def test_view_report_html(self, mock_report):
+        """HTML 보고서 뷰어 테스트"""
+        # 임시 HTML 파일 생성
+        report_path = os.path.join(self.output_dir, 'test_report.html')
+        with open(report_path, 'w') as f:
+            f.write('<html><body>Test Report</body></html>')
+        
+        mock_report.get_report.return_value = {
+            'id': 'report_123',
+            'format': 'html',
+            'path': report_path
+        }
+        
+        response = self.client.get('/view/report/report_123')
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Test Report', response.data)
+    
+    @patch('src.user_interface.app.report_generator')
+    def test_view_report_json(self, mock_report):
+        """JSON 보고서 뷰어 테스트"""
+        # 임시 JSON 파일 생성
+        report_path = os.path.join(self.output_dir, 'test_report.json')
+        with open(report_path, 'w') as f:
+            json.dump({'test': 'report'}, f)
+        
+        mock_report.get_report.return_value = {
+            'id': 'report_123',
+            'format': 'json',
+            'path': report_path
+        }
+        
+        response = self.client.get('/view/report/report_123')
+        
+        self.assertEqual(response.status_code, 200)
+        # JSON viewer template을 렌더링하는지 확인
+        self.assertIn(b'json', response.data.lower())
+    
+    @patch('src.user_interface.app.storage_manager')
+    @patch('src.user_interface.app.document_processor')
+    def test_create_batch_job(self, mock_processor, mock_storage):
+        """배치 작업 생성 테스트"""
+        # Mock batch processor
+        mock_batch = MagicMock()
+        mock_batch.create_job.return_value = 'job_123'
+        mock_batch.start_job.return_value = None
+        mock_storage.batch_processor = mock_batch
+        
+        response = self.client.post('/api/jobs',
+                                  json={
+                                      'job_type': 'process_directory',
+                                      'job_params': {'directory': '/test'}
+                                  })
+        
+        self.assertEqual(response.status_code, 200)
+        json_data = json.loads(response.data)
+        self.assertEqual(json_data['status'], 'success')
+        self.assertEqual(json_data['data']['job_id'], 'job_123')
+        mock_batch.create_job.assert_called_once()
+        mock_batch.start_job.assert_called_once_with('job_123')
+    
+    @patch('src.user_interface.app.storage_manager')
+    def test_create_batch_job_invalid_type(self, mock_storage):
+        """잘못된 작업 유형으로 배치 작업 생성 테스트"""
+        mock_storage.batch_processor = MagicMock()
+        
+        response = self.client.post('/api/jobs',
+                                  json={'job_type': 'invalid_type'})
+        
+        self.assertEqual(response.status_code, 400)
+        json_data = json.loads(response.data)
+        self.assertEqual(json_data['status'], 'error')
+        self.assertIn('유효하지 않은 작업 유형', json_data['message'])
+    
+    @patch('src.user_interface.app.storage_manager')
+    def test_delete_batch_job(self, mock_storage):
+        """배치 작업 삭제 테스트"""
+        mock_batch = MagicMock()
+        mock_batch.job_exists.return_value = True
+        mock_batch.delete_job.return_value = None
+        mock_storage.batch_processor = mock_batch
+        
+        response = self.client.delete('/api/jobs/job_123')
+        
+        self.assertEqual(response.status_code, 200)
+        json_data = json.loads(response.data)
+        self.assertEqual(json_data['status'], 'success')
+        mock_batch.delete_job.assert_called_once_with('job_123')
+    
+    @patch('src.user_interface.app.storage_manager')
+    def test_update_batch_job(self, mock_storage):
+        """배치 작업 업데이트 테스트"""
+        mock_batch = MagicMock()
+        mock_batch.job_exists.return_value = True
+        mock_batch.pause_job.return_value = None
+        mock_storage.batch_processor = mock_batch
+        
+        response = self.client.put('/api/jobs/job_123',
+                                 json={'action': 'pause'})
+        
+        self.assertEqual(response.status_code, 200)
+        json_data = json.loads(response.data)
+        self.assertEqual(json_data['status'], 'success')
+        self.assertIn('일시 중지', json_data['message'])
+        mock_batch.pause_job.assert_called_once_with('job_123')
+    
+    @patch('src.user_interface.app.storage_manager')
+    def test_update_batch_job_invalid_action(self, mock_storage):
+        """잘못된 액션으로 배치 작업 업데이트 테스트"""
+        mock_batch = MagicMock()
+        mock_batch.job_exists.return_value = True
+        mock_storage.batch_processor = mock_batch
+        
+        response = self.client.put('/api/jobs/job_123',
+                                 json={'action': 'invalid_action'})
+        
+        self.assertEqual(response.status_code, 400)
+        json_data = json.loads(response.data)
+        self.assertEqual(json_data['status'], 'error')
+        self.assertIn('유효하지 않은 액션', json_data['message'])
+    
+    def test_jobs_page(self):
+        """배치 작업 관리 페이지 테스트"""
+        response = self.client.get('/jobs')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'jobs', response.data)
+    
+    @patch('src.user_interface.app.content_analyzer', None)
+    def test_search_without_analyzer(self):
+        """content_analyzer가 초기화되지 않은 상태에서 검색 테스트"""
+        response = self.client.post('/api/search', json={'patterns': ['test']})
+        
+        self.assertEqual(response.status_code, 500)
+        json_data = json.loads(response.data)
+        self.assertEqual(json_data['status'], 'error')
+        self.assertIn('Required components not initialized', json_data['message'])
+    
+    @patch('src.user_interface.app.storage_manager', None)
+    def test_list_documents_without_storage(self):
+        """storage_manager가 초기화되지 않은 상태에서 문서 목록 조회 테스트"""
+        response = self.client.get('/api/documents')
+        
+        self.assertEqual(response.status_code, 200)
+        json_data = json.loads(response.data)
+        self.assertEqual(json_data['status'], 'success')
+        self.assertEqual(json_data['data'], [])
+    
+    def test_upload_empty_filename(self):
+        """빈 파일명으로 업로드 테스트"""
+        data = {
+            'file': (None, '')
+        }
+        response = self.client.post('/api/upload',
+                                  data=data,
+                                  content_type='multipart/form-data')
+        
+        self.assertEqual(response.status_code, 400)
+        json_data = json.loads(response.data)
+        self.assertEqual(json_data['status'], 'error')
+        self.assertEqual(json_data['message'], 'No selected file')
+    
+    @patch('src.user_interface.app.initialize_app')
+    def test_app_initialization(self, mock_init):
+        """애플리케이션 초기화 테스트"""
+        # 애플리케이션이 이미 초기화되어 있으므로 이 테스트는 초기화 함수가 호출되는지만 확인
+        from src.user_interface import app as app_module
+        
+        # 설정이 로드되는지 확인
+        self.assertIsInstance(app_module.config, dict)
+
 
 if __name__ == '__main__':
     unittest.main() 

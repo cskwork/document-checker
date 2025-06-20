@@ -89,6 +89,29 @@ class ReportGenerator:
         
         return report_metadata
     
+    def get_report(self, report_id: str) -> Optional[Dict[str, Any]]:
+        """
+        보고서 ID로 보고서 메타데이터 조회
+        
+        Args:
+            report_id (str): 보고서 ID
+            
+        Returns:
+            dict: 보고서 메타데이터 또는 None
+        """
+        metadata_path = os.path.join(self.reports_dir, f"{report_id}_metadata.json")
+        
+        if not os.path.exists(metadata_path):
+            return None
+            
+        try:
+            with open(metadata_path, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+                return metadata
+        except Exception as e:
+            print(f"보고서 메타데이터 로드 중 오류: {str(e)}")
+            return None
+    
     def _generate_html_report(self, search_results: Dict[str, Any], report_id: str, timestamp: str) -> str:
         """
         HTML 형식의 보고서 생성
