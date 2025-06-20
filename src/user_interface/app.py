@@ -142,7 +142,7 @@ def execute_search():
                     grouped_results[doc_id] = {
                         'id': doc_id,
                         'filename': doc_meta.get('filename', 'Unknown File'),
-                        'date': doc_meta.get('createdAt', datetime.now().isoformat()), # 'createdAt' 키 사용
+                        'date': doc_meta.get('createdAt', datetime.datetime.now().isoformat()), # 'createdAt' 키 사용
                         'filetype': doc_meta.get('format', 'N/A').upper(),          # 'format' 키 사용
                         'size': doc_meta.get('size', 0),
                         'matches': [],
