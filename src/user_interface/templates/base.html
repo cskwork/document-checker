@@ -1,103 +1,206 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="h-full bg-gray-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>문서 검사기 {% block title %}{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'korean': ['Noto Sans KR', 'system-ui', 'sans-serif']
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('index') }}">문서 검사기</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">
-                            <i class="bi bi-house-door"></i> 홈
+<body class="h-full font-korean">
+    <nav class="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{{ url_for('index') }}" class="flex-shrink-0 flex items-center">
+                        <h1 class="text-2xl font-bold text-primary-700">문서 검사기</h1>
+                    </a>
+                    <div class="hidden md:ml-8 md:flex md:space-x-4">
+                        <a href="{{ url_for('index') }}" class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                            </svg>
+                            홈
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('search_page') }}">
-                            <i class="bi bi-search"></i> 검색
+                        <a href="{{ url_for('search_page') }}" class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            검색
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="uploadBtn">
-                            <i class="bi bi-upload"></i> 문서 업로드
-                        </a>
-                    </li>
-                </ul>
-                <div class="d-flex">
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="문서 검색...">
-                        <button class="btn btn-outline-light" type="button">
-                            <i class="bi bi-search"></i>
+                        <button id="uploadBtn" class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            문서 업로드
                         </button>
                     </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center">
+                        <div class="relative">
+                            <input type="text" class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="문서 검색...">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="mobile-menu-button" class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+                <a href="{{ url_for('index') }}" class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100">홈</a>
+                <a href="{{ url_for('search_page') }}" class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100">검색</a>
+                <button id="uploadBtnMobile" class="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100">문서 업로드</button>
+                <div class="px-3 py-2">
+                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="문서 검색...">
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid mt-3">
+    <main class="flex-1">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-4 rounded-lg {% if category == 'success' %}bg-green-50 border border-green-200 text-green-800{% elif category == 'error' or category == 'danger' %}bg-red-50 border border-red-200 text-red-800{% elif category == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-800{% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">{{ message }}</span>
+                                <button type="button" class="ml-4 text-gray-400 hover:text-gray-600" onclick="this.parentElement.parentElement.remove()">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
 
-        {% block content %}{% endblock %}
-    </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
 
-    <footer class="footer mt-auto py-3 bg-light">
-        <div class="container text-center">
-            <span class="text-muted">© 2025 문서 검사기. All rights reserved.</span>
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="text-center text-sm text-gray-500">
+                © 2025 문서 검사기. All rights reserved.
+            </div>
         </div>
     </footer>
 
     <!-- 파일 업로드 모달 -->
-    <div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">문서 업로드</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="uploadForm" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="fileInput" class="form-label">문서 선택</label>
-                            <input class="form-control" type="file" id="fileInput" name="file" required>
-                            <div class="form-text">PDF, DOCX, TXT, CSV, XLSX 파일을 업로드할 수 있습니다.</div>
+    <div id="uploadModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">문서 업로드</h3>
+                            <form id="uploadForm" enctype="multipart/form-data">
+                                <div class="mb-4">
+                                    <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-2">문서 선택</label>
+                                    <input type="file" id="fileInput" name="file" required 
+                                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+                                    <p class="mt-2 text-sm text-gray-500">PDF, DOCX, TXT, CSV, XLSX 파일을 업로드할 수 있습니다.</p>
+                                </div>
+                            </form>
+                            <div id="uploadProgress" class="hidden mt-4">
+                                <div class="bg-gray-200 rounded-full h-2">
+                                    <div class="bg-primary-600 h-2 rounded-full transition-all duration-300" style="width: 0%" id="progressBar"></div>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-2">업로드 중...</p>
+                            </div>
                         </div>
-                    </form>
-                    <div id="uploadProgress" class="progress d-none mt-2">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary" id="submitUpload">업로드</button>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="submitUpload" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        업로드
+                    </button>
+                    <button type="button" id="cancelUpload" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        취소
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Modal functionality
+        const uploadModal = document.getElementById('uploadModal');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadBtnMobile = document.getElementById('uploadBtnMobile');
+        const cancelUpload = document.getElementById('cancelUpload');
+
+        function showModal() {
+            uploadModal.classList.remove('hidden');
+        }
+
+        function hideModal() {
+            uploadModal.classList.add('hidden');
+        }
+
+        uploadBtn.addEventListener('click', showModal);
+        if (uploadBtnMobile) {
+            uploadBtnMobile.addEventListener('click', showModal);
+        }
+        cancelUpload.addEventListener('click', hideModal);
+
+        // Close modal when clicking outside
+        uploadModal.addEventListener('click', function(e) {
+            if (e.target === uploadModal) {
+                hideModal();
+            }
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

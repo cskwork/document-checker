@@ -3,100 +3,110 @@
 {% block title %} - 문서 검색{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-search me-2"></i>문서 검색</h5>
-            </div>
-            <div class="card-body">
-                <form id="searchForm">
-                    <div class="row mb-3">
-                        <div class="col-md-8">
-                            <div id="searchPatterns">
-                                <div class="mb-3">
-                                    <label class="form-label">검색어</label>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" name="patterns[]" placeholder="검색할 단어나 문장을 입력하세요" required>
-                                        <button type="button" class="btn btn-outline-secondary" id="addPattern">
-                                            <i class="bi bi-plus-lg"></i> 추가
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="caseSensitive" name="options[caseSensitive]">
-                                        <label class="form-check-label" for="caseSensitive">대소문자 구분</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="wholeWord" name="options[wholeWord]">
-                                        <label class="form-check-label" for="wholeWord">단어 단위 일치</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="regex" name="options[regex]">
-                                        <label class="form-check-label" for="regex">정규식 사용</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label">문서 유형</label>
-                                <select class="form-select" name="scope[fileType]" multiple>
-                                    <option value="pdf" selected>PDF</option>
-                                    <option value="docx" selected>Word (DOCX)</option>
-                                    <option value="xlsx" selected>Excel (XLSX)</option>
-                                    <option value="txt" selected>텍스트 (TXT)</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">날짜 범위</label>
-                                <div class="input-group">
-                                    <input type="date" class="form-control" name="scope[dateFrom]">
-                                    <span class="input-group-text">~</span>
-                                    <input type="date" class="form-control" name="scope[dateTo]">
-                                </div>
+<!-- 검색 인터페이스 -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="bg-primary-600 text-white px-6 py-4 rounded-t-lg">
+        <h2 class="text-xl font-semibold flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            문서 검색
+        </h2>
+    </div>
+    <div class="p-6">
+        <form id="searchForm" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- 검색어 섹션 -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div id="searchPatterns">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">검색어</label>
+                            <div class="flex space-x-2">
+                                <input type="text" class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" name="patterns[]" placeholder="검색할 단어나 문장을 입력하세요" required>
+                                <button type="button" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" id="addPattern">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                    추가
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button type="reset" class="btn btn-outline-secondary me-md-2">초기화</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search me-1"></i> 검색 실행
-                        </button>
+                    
+                    <!-- 검색 옵션 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="caseSensitive" name="options[caseSensitive]" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                            <label for="caseSensitive" class="ml-2 block text-sm text-gray-900">대소문자 구분</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="wholeWord" name="options[wholeWord]" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                            <label for="wholeWord" class="ml-2 block text-sm text-gray-900">단어 단위 일치</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="regex" name="options[regex]" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                            <label for="regex" class="ml-2 block text-sm text-gray-900">정규식 사용</label>
+                        </div>
                     </div>
-                </form>
-            </div>
-        </div>
-        
-        <div class="card mb-4" id="resultsCard" style="display: none;">
-            <div class="card-header bg-light">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">검색 결과</h5>
-                    <span class="badge bg-primary" id="resultCount">0개 문서</span>
+                </div>
+                
+                <!-- 필터 섹션 -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">문서 유형</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" name="scope[fileType]" multiple size="4">
+                            <option value="pdf" selected class="py-1">PDF</option>
+                            <option value="docx" selected class="py-1">Word (DOCX)</option>
+                            <option value="xlsx" selected class="py-1">Excel (XLSX)</option>
+                            <option value="txt" selected class="py-1">텍스트 (TXT)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">날짜 범위</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="date" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" name="scope[dateFrom]">
+                            <input type="date" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" name="scope[dateTo]">
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="card-body p-0">
-                <div class="row g-0">
-                    <div class="col-md-4 border-end">
-                        <div class="list-group list-group-flush" id="resultsList" style="max-height: 500px; overflow-y: auto;">
-                            <!-- 검색 결과가 여기에 표시됩니다 -->
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="p-3" id="documentPreview">
-                            <div class="text-center py-5">
-                                <i class="bi bi-file-earmark-text" style="font-size: 3rem; opacity: 0.5;"></i>
-                                <p class="mt-3">왼쪽에서 문서를 선택하세요</p>
-                            </div>
-                        </div>
-                    </div>
+            
+            <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                <button type="reset" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    초기화
+                </button>
+                <button type="submit" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    검색 실행
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+        
+<!-- 검색 결과 -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 hidden" id="resultsCard">
+    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-lg">
+        <div class="flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-900">검색 결과</h3>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800" id="resultCount">0개 문서</span>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-5 min-h-96">
+        <div class="lg:col-span-2 border-r border-gray-200">
+            <div class="h-96 lg:h-auto lg:max-h-96 overflow-y-auto" id="resultsList">
+                <!-- 검색 결과가 여기에 표시됩니다 -->
+            </div>
+        </div>
+        <div class="lg:col-span-3">
+            <div class="p-6 h-full" id="documentPreview">
+                <div class="flex flex-col items-center justify-center h-full text-center">
+                    <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <p class="text-gray-500">왼쪽에서 문서를 선택하세요</p>
                 </div>
             </div>
         </div>
@@ -119,12 +129,15 @@ document.addEventListener('DOMContentLoaded', function() {
     addPatternBtn.addEventListener('click', function() {
         const patternCount = document.querySelectorAll('input[name="patterns[]"]').length;
         const newPattern = document.createElement('div');
-        newPattern.className = 'mb-3';
+        newPattern.className = 'space-y-2';
         newPattern.innerHTML = `
-            <div class="input-group">
-                <input type="text" class="form-control" name="patterns[]" placeholder="검색할 단어나 문장을 입력하세요" required>
-                <button type="button" class="btn btn-outline-danger remove-pattern">
-                    <i class="bi bi-dash-lg"></i> 제거
+            <div class="flex space-x-2">
+                <input type="text" class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" name="patterns[]" placeholder="검색할 단어나 문장을 입력하세요" required>
+                <button type="button" class="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 remove-pattern">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                    </svg>
+                    제거
                 </button>
             </div>
         `;
@@ -179,8 +192,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // 검색 실행 함수
     function executeSearch(searchData) {
         // 로딩 표시
-        resultsList.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">검색 중...</p></div>';
-        resultsCard.style.display = 'block';
+        resultsList.innerHTML = '<div class="flex flex-col items-center justify-center p-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div><p class="mt-4 text-gray-600">검색 중...</p></div>';
+        resultsCard.classList.remove('hidden');
         
         // API 호출
         fetch('/api/search', {
@@ -199,14 +212,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            resultsList.innerHTML = `<div class="alert alert-danger m-3">${error.message}</div>`;
+            resultsList.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-md p-4 m-4"><div class="flex"><div class="flex-shrink-0"><svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg></div><div class="ml-3"><p class="text-sm text-red-800">${error.message}</p></div></div></div>`;
         });
     }
     
     // 검색 결과 표시 함수
     function displayResults(results) {
         if (!results || results.length === 0) {
-            resultsList.innerHTML = '<div class="text-center p-4"><i class="bi bi-exclamation-circle" style="font-size: 2rem; opacity: 0.5;"></i><p class="mt-2">검색 결과가 없습니다.</p></div>';
+            resultsList.innerHTML = '<div class="flex flex-col items-center justify-center p-8"><svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg><p class="text-gray-500">검색 결과가 없습니다.</p></div>';
             resultCount.textContent = '0개 문서';
             return;
         }
@@ -217,20 +230,24 @@ document.addEventListener('DOMContentLoaded', function() {
         results.forEach((result, index) => {
             const resultItem = document.createElement('a');
             resultItem.href = '#';
-            resultItem.className = 'list-group-item list-group-item-action';
+            resultItem.className = 'block hover:bg-gray-50 px-4 py-4 border-b border-gray-200 cursor-pointer transition-colors';
             resultItem.innerHTML = `
-                <div class="d-flex w-100 justify-content-between">
-                    <h6 class="mb-1">${result.filename}</h6>
-                    <small class="text-muted">${new Date(result.date).toLocaleDateString()}</small>
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="text-sm font-medium text-gray-900 truncate">${result.filename}</h4>
+                    <span class="text-xs text-gray-500 ml-2 flex-shrink-0">${new Date(result.date).toLocaleDateString()}</span>
                 </div>
-                <p class="mb-1 small">${result.matches.length}개 일치 항목 발견</p>
-                <small class="text-muted">${(result.filetype || 'unknown').toUpperCase()}, ${formatFileSize(result.size)}</small>
+                <p class="text-sm text-gray-600 mb-1">${result.matches.length}개 일치 항목 발견</p>
+                <div class="text-xs text-gray-500">${(result.filetype || 'unknown').toUpperCase()}, ${formatFileSize(result.size)}</div>
             `;
             
             resultItem.addEventListener('click', function(e) {
                 e.preventDefault();
-                document.querySelectorAll('#resultsList a').forEach(item => item.classList.remove('active'));
-                this.classList.add('active');
+                document.querySelectorAll('#resultsList a').forEach(item => {
+                    item.classList.remove('bg-primary-50', 'border-primary-200');
+                    item.classList.add('hover:bg-gray-50');
+                });
+                this.classList.remove('hover:bg-gray-50');
+                this.classList.add('bg-primary-50', 'border-primary-200');
                 displayDocumentPreview(result);
             });
             
@@ -239,7 +256,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 첫 번째 결과 자동 선택
         if (results.length > 0) {
-            resultsList.querySelector('a').classList.add('active');
+            const firstItem = resultsList.querySelector('a');
+            firstItem.classList.remove('hover:bg-gray-50');
+            firstItem.classList.add('bg-primary-50', 'border-primary-200');
             displayDocumentPreview(results[0]);
         }
     }
@@ -247,29 +266,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // 문서 미리보기 표시 함수
     function displayDocumentPreview(document) {
         documentPreview.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5>${document.filename}</h5>
-                <a href="/view/document/${document.id}" class="btn btn-sm btn-outline-primary" target="_blank">
-                    <i class="bi bi-arrows-fullscreen"></i> 전체 보기
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 truncate">${document.filename}</h3>
+                <a href="/view/document/${document.id}" class="inline-flex items-center px-3 py-1 border border-primary-300 text-sm font-medium rounded-md text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors" target="_blank">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                    전체 보기
                 </a>
             </div>
-            <div class="card mb-3">
-                <div class="card-header">
-                    <small class="text-muted">
-                        <i class="bi bi-info-circle"></i> 
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm mb-4">
+                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 rounded-t-lg">
+                    <div class="flex items-center text-sm text-gray-600">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
                         ${(document.filetype || 'unknown').toUpperCase()} 파일, ${formatFileSize(document.size)}, 
                         업로드: ${new Date(document.date).toLocaleString()}
-                    </small>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div id="matchesList">
+                <div class="p-4 max-h-64 overflow-y-auto">
+                    <div class="space-y-4">
                         ${document.matches.map((match, idx) => `
-                            <div class="mb-3 p-2 border-start border-primary border-3">
-                                <div class="small text-muted mb-1">일치 항목 #${idx + 1}</div>
-                                <div class="bg-light p-2 rounded">
-                                    <pre class="mb-0" style="white-space: pre-wrap;">${match.context_before}<mark>${match.text}</mark>${match.context_after}</pre>
+                            <div class="border-l-4 border-primary-500 pl-4 py-2">
+                                <div class="text-sm text-gray-500 mb-2">일치 항목 #${idx + 1}</div>
+                                <div class="bg-gray-50 p-3 rounded-md">
+                                    <pre class="text-sm whitespace-pre-wrap font-mono">${match.context_before}<mark class="bg-yellow-200 px-1 rounded">${match.text}</mark>${match.context_after}</pre>
                                 </div>
-                                <div class="small text-muted mt-1">
+                                <div class="text-xs text-gray-500 mt-2">
                                     페이지 ${match.page || 'N/A'}, 위치: ${match.position || 'N/A'}
                                 </div>
                             </div>
