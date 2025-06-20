@@ -49,6 +49,9 @@ python -m unittest tests/test_docling_integration.py
 python test_docling.py
 python test_processor.py
 python test_batch.py
+
+# Run tests with verbose output
+python -m unittest discover -s tests -v
 ```
 
 ### Debugging Common Issues

@@ -1,0 +1,17 @@
+{
+  "id": "d5e5c0b5-ac45-4ea0-b727-e9d43876e46d",
+  "filename": "test_document.txt",
+  "format": "txt",
+  "content": {
+    "text": "This is a test document for batch processing.",
+    "sections": [],
+    "metadata": {
+      "file_size": 45,
+      "created": "2025-06-20T11:00:44.376846",
+      "modified": "2025-06-20T11:00:44.376846"
+    }
+  },
+  "processingStatus": "processed",
+  "createdAt": "2025-06-20T11:06:25.174473",
+  "lastModified": "2025-06-20T11:06:25.174473"
+}

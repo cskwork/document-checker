@@ -14,12 +14,19 @@ def test_batch_processing():
     input_dir = base_dir / 'input'
     output_dir = base_dir / 'output'
     
+    # 입력 디렉토리가 없으면 생성
+    input_dir.mkdir(exist_ok=True)
+    output_dir.mkdir(exist_ok=True)
+    
     # 입력 디렉토리에서 파일 목록 가져오기
     file_paths = [str(f.absolute()) for f in input_dir.iterdir() if f.is_file()]
     
     if not file_paths:
         print("입력 디렉토리에 파일이 없습니다.")
-        return
+        # 테스트 파일 생성
+        test_file = input_dir / 'test_document.txt'
+        test_file.write_text('This is a test document for batch processing.')
+        file_paths = [str(test_file.absolute())]
     
     print(f"처리할 파일 목록: {file_paths}")
     
@@ -45,17 +52,19 @@ def test_batch_processing():
     for doc in documents:
         print(f"- ID: {doc['id']}, 파일명: {doc['filename']}, 상태: {doc.get('processingStatus', '알 수 없음')}")
     
-    return job_id
+    # 테스트 검증 추가
+    assert job_id is not None, "배치 작업 ID가 생성되어야 합니다"
+    assert status is not None, "배치 작업 상태를 가져올 수 있어야 합니다"
+    assert len(documents) > 0, "처리된 문서가 최소 1개 이상 있어야 합니다"
 
 if __name__ == "__main__":
-    job_id = test_batch_processing()
+    test_batch_processing()
     
     # 배치 작업 목록 확인
-    if job_id:
-        print("\n모든 배치 작업 목록:")
-        from src.storage_manager.batch_processor import get_batch_processor
-        batch_processor = get_batch_processor()
-        jobs = batch_processor.list_jobs()
-        for job in jobs:
-            print(f"- ID: {job['job_id']}, 상태: {job['status']}, 진행률: {job['progress']:.2f}, "
-                  f"파일 수: {job['total_files']}")
+    print("\n모든 배치 작업 목록:")
+    from src.storage_manager.batch_processor import get_batch_processor
+    batch_processor = get_batch_processor()
+    jobs = batch_processor.list_jobs()
+    for job in jobs:
+        print(f"- ID: {job['job_id']}, 상태: {job['status']}, 진행률: {job['progress']:.2f}, "
+              f"파일 수: {job['total_files']}")

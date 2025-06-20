@@ -9,10 +9,15 @@ from pathlib import Path
 # src 디렉토리를 Python 경로에 추가
 sys.path.append(str(Path(__file__).parent.parent / 'src'))
 
-# docling 모듈을 모의로 생성
-sys.modules['docling'] = Mock()
-from docling import Document
+# docling 모듈 모킹 설정
+mock_docling = MagicMock()
+mock_converter_class = MagicMock()
+mock_docling.document_converter = MagicMock()
+mock_docling.document_converter.DocumentConverter = mock_converter_class
+sys.modules['docling'] = mock_docling
+sys.modules['docling.document_converter'] = mock_docling.document_converter
 
+# Now import after mocking
 from document_processor.processor import DocumentProcessor
 
 class TestDocumentProcessor(unittest.TestCase):
@@ -21,6 +26,10 @@ class TestDocumentProcessor(unittest.TestCase):
     def setUp(self):
         """테스트 전 설정"""
         self.test_dir = tempfile.mkdtemp()
+        # Patch DOCLING_AVAILABLE to True for tests that need it
+        self.docling_patch = patch('document_processor.processor.DOCLING_AVAILABLE', True)
+        self.docling_patch.start()
+        
         self.processor = DocumentProcessor()
         
         # 테스트용 파일 생성
@@ -30,24 +39,39 @@ class TestDocumentProcessor(unittest.TestCase):
     
     def tearDown(self):
         """테스트 후 정리"""
+        self.docling_patch.stop()
         shutil.rmtree(self.test_dir)
     
-    @patch('document_processor.processor.Document')
-    def test_process_document_success(self, mock_document):
+    def test_process_document_success(self):
         """문서 처리 성공 테스트"""
         # 모의 객체 설정
+        mock_converter = MagicMock()
+        mock_converter_class.return_value = mock_converter
+        
+        # 변환 결과 모의 객체
+        mock_result = MagicMock()
         mock_doc = MagicMock()
-        mock_doc.text = "This is a test document."
-        mock_doc.get_sections.return_value = [{'title': 'Section 1', 'content': 'Content 1'}]
+        mock_doc.export_to_text.return_value = "This is a test document."
+        mock_doc.export_to_markdown.return_value = ""  # No markdown
+        mock_doc.sections = []
         mock_doc.metadata = {'author': 'Test User', 'created': '2023-01-01'}
-        mock_document.from_file.return_value = mock_doc
+        # text 속성도 추가
+        mock_doc.text = None
+        mock_result.document = mock_doc
+        
+        mock_converter.convert.return_value = mock_result
+        
+        # PDF 파일 테스트
+        pdf_file = os.path.join(self.test_dir, 'test.pdf')
+        with open(pdf_file, 'wb') as f:
+            f.write(b'%PDF-1.4')  # 최소 PDF 헤더
         
         # 문서 처리 실행
-        result = self.processor.process_document(self.txt_file)
+        result = self.processor.process_document(pdf_file)
         
         # 결과 검증
         self.assertEqual(result['processingStatus'], 'processed')
-        self.assertEqual(result['format'], 'txt')
+        self.assertEqual(result['format'], 'pdf')
         self.assertEqual(result['content']['text'], "This is a test document.")
         self.assertIn('sections', result['content'])
         self.assertIn('metadata', result['content'])
@@ -62,13 +86,19 @@ class TestDocumentProcessor(unittest.TestCase):
         self.assertEqual(result['processingStatus'], 'error')
         self.assertIn('지원하지 않는 파일 형식입니다', result['error'])
     
-    @patch('document_processor.processor.Document.from_file')
-    def test_corrupted_document(self, mock_from_file):
+    def test_corrupted_document(self):
         """손상된 문서 처리 테스트"""
         # 모의 예외 발생
-        mock_from_file.side_effect = Exception("Corrupted document")
+        mock_converter = MagicMock()
+        mock_converter_class.return_value = mock_converter
+        mock_converter.convert.side_effect = Exception("Corrupted document")
         
-        result = self.processor.process_document(self.txt_file)
+        # PDF 파일 테스트
+        pdf_file = os.path.join(self.test_dir, 'test.pdf')
+        with open(pdf_file, 'wb') as f:
+            f.write(b'%PDF-1.4')
+        
+        result = self.processor.process_document(pdf_file)
         self.assertEqual(result['processingStatus'], 'error')
         self.assertEqual(result['error'], 'Corrupted document')
 

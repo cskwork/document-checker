@@ -37,7 +37,12 @@ class TestStorageManager(unittest.TestCase):
             'id': 'test_doc_123',
             'filename': 'test.pdf',
             'format': 'pdf',
-            'content': '테스트 문서 내용',
+            'content': {
+                'text': '테스트 문서 내용',
+                'sections': [],
+                'metadata': {}
+            },
+            'processingStatus': 'processed',
             'createdAt': time.time()
         }
         

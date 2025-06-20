@@ -243,28 +243,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 문서 표시 함수
-    function displayDocument(document) {
+    function displayDocument(docData) {
         // 문서 메타데이터 업데이트
-        document.getElementById('documentTitle').textContent = document.filename;
-        document.getElementById('documentType').textContent = document.filetype.toUpperCase();
-        document.getElementById('documentInfo').textContent = `파일 크기: ${formatFileSize(document.size)} | 페이지: ${document.pages || 1} | 업로드: ${new Date(document.uploaded_at).toLocaleDateString()}`;
-        document.getElementById('documentFilename').textContent = document.filename;
-        document.getElementById('documentFileType').textContent = document.filetype.toUpperCase();
-        document.getElementById('documentSize').textContent = formatFileSize(document.size);
-        document.getElementById('documentUploadDate').textContent = new Date(document.uploaded_at).toLocaleString();
-        document.getElementById('documentPageCount').textContent = document.pages || 1;
-        document.getElementById('documentAuthor').textContent = document.author || '-';
+        document.getElementById('documentTitle').textContent = docData.filename;
+        document.getElementById('documentType').textContent = docData.filetype.toUpperCase();
+        document.getElementById('documentInfo').textContent = `파일 크기: ${formatFileSize(docData.size)} | 페이지: ${docData.pages || 1} | 업로드: ${new Date(docData.uploaded_at).toLocaleDateString()}`;
+        document.getElementById('documentFilename').textContent = docData.filename;
+        document.getElementById('documentFileType').textContent = docData.filetype.toUpperCase();
+        document.getElementById('documentSize').textContent = formatFileSize(docData.size);
+        document.getElementById('documentUploadDate').textContent = new Date(docData.uploaded_at).toLocaleString();
+        document.getElementById('documentPageCount').textContent = docData.pages || 1;
+        document.getElementById('documentAuthor').textContent = docData.author || '-';
         
         // 페이지 네비게이션 업데이트
-        totalPages = document.pages || 1;
+        totalPages = docData.pages || 1;
         updatePageIndicator();
         
         // 문서 내용 표시
         displayPage(currentPage);
         
         // 일치 항목 표시
-        if (document.matches && document.matches.length > 0) {
-            matches = document.matches;
+        if (docData.matches && docData.matches.length > 0) {
+            matches = docData.matches;
             displayMatches(matches);
         } else {
             document.getElementById('matchesList').innerHTML = `
