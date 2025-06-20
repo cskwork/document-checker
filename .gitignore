@@ -1,4 +1,7 @@
 # Logs
+.taskmaster/
+.claude/
+.env.example
 .roomodes
 .taskmasterconfig
 .cursor/
