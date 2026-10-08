@@ -356,9 +356,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         const htmlContent = convertMarkdownToHtml(data.data.content);
                         contentDiv.innerHTML = htmlContent;
                     } else if (data.data.content_type === 'text') {
-                        contentDiv.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;">${data.data.content}</pre>`;
+                        contentDiv.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(data.data.content)}</pre>`;
                     } else if (data.data.content_type === 'image') {
-                        contentDiv.innerHTML = `<img src="${data.data.content_url}" alt="Page ${pageNum}" class="img-fluid">`;
+                        const imageUrl = sanitizeUrl(data.data.content_url, ['http:', 'https:']);
+                        contentDiv.innerHTML = imageUrl
+                            ? `<img src="${escapeHtml(imageUrl)}" alt="Page ${escapeHtml(pageNum)}" class="img-fluid">`
+                            : '<div class="image-placeholder"><i class="bi bi-image"></i> 이미지</div>';
                     } else {
                         // 기본값으로 마크다운 처리
                         const htmlContent = convertMarkdownToHtml(data.data.content);
@@ -394,10 +397,10 @@ document.addEventListener('DOMContentLoaded', function() {
             matchItem.className = 'block px-4 py-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors';
             matchItem.innerHTML = `
                 <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs text-gray-500">페이지 ${match.page || 1}</span>
+                    <span class="text-xs text-gray-500">페이지 ${escapeHtml(match.page || 1)}</span>
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">${index + 1}/${matchesList.length}</span>
                 </div>
-                <p class="text-sm text-gray-700 line-clamp-2">...${match.context_before}<span class="bg-yellow-200 px-1 rounded">${match.text}</span>${match.context_after}...</p>
+                <p class="text-sm text-gray-700 line-clamp-2">...${escapeHtml(match.context_before)}<span class="bg-yellow-200 px-1 rounded">${escapeHtml(match.text)}</span>${escapeHtml(match.context_after)}...</p>
             `;
             
             matchItem.addEventListener('click', function(e) {
@@ -519,7 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm text-red-800">${message}</p>
+                        <p class="text-sm text-red-800">${escapeHtml(message)}</p>
                     </div>
                 </div>
             </div>
@@ -654,20 +657,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 마크다운을 HTML로 변환하는 함수
+    // 보안: 문서 원문은 모두 이스케이프한 뒤 변환한다. 원문의 HTML 중에서는
+    // ALLOWED_INLINE_TAGS(속성 없는 단순 서식), <br>, 검증된 href만 가진 <a>만 다시 태그로 만든다.
     function convertMarkdownToHtml(markdown) {
         if (!markdown) return '';
         
-        let html = markdown;
+        // 신뢰된 마크업 조각은 자리표시자(사설 영역 문자)로 보관했다가 마지막에 복원
+        const trustedFragments = [];
+        function keepTrusted(fragment) {
+            trustedFragments.push(fragment);
+            return '\uE000' + (trustedFragments.length - 1) + '\uE001';
+        }
+
+        let html = String(markdown).replace(/[\uE000\uE001]/g, '\uFFFD');
         
         // 이미지 주석 변환 (이스케이프 전에 처리)
-        html = html.replace(/<!-- image -->/g, '<div class="image-placeholder"><i class="bi bi-image"></i> 이미지</div>');
+        html = html.replace(/<!-- image -->/g, () => keepTrusted('<div class="image-placeholder"><i class="bi bi-image"></i> 이미지</div>'));
         
-        // 테이블 변환 (이스케이프 전에 처리)
+        // 허용된 인라인 서식/링크 태그 보존 (이스케이프 전에 처리)
+        html = keepAllowedInlineTags(html, keepTrusted);
+
+        // HTML 이스케이프 처리 (보안) - 기존 문자 참조(&amp; 등)는 텍스트로만 해석되므로 유지
+        html = escapeMarkdownText(html);
+
+        // 테이블 변환 (셀 내용은 이미 이스케이프됨)
         html = convertMarkdownTables(html);
-        
-        // HTML 이스케이프 처리 (보안) - 단, 이미 변환된 HTML 태그는 제외
-        // 특수 문자만 이스케이프
-        html = html.replace(/&(?!amp;|lt;|gt;|quot;|#)/g, '&amp;');
         
         // 헤더 변환 (## 제목 -> <h2>제목</h2>)
         html = html.replace(/^## (.+)$/gm, '<h2 class="mt-4 mb-3">$1</h2>');
@@ -695,6 +709,9 @@ document.addEventListener('DOMContentLoaded', function() {
         html = html.replace(/<p>\s*<br>\s*<\/p>/g, '');
         html = html.replace(/<br>\s*<\/p>/g, '</p>');
         html = html.replace(/<p>\s*<br>/g, '<p>');
+
+        // 신뢰된 마크업 조각 복원 (모든 정규식 변환 이후)
+        html = html.replace(/\uE000(\d+)\uE001/g, (placeholder, index) => trustedFragments[Number(index)] || '');
         
         return `<div class="document-content" style="line-height: 1.8; font-size: 14px; white-space: pre-wrap;">${html}</div>`;
     }
@@ -751,6 +768,153 @@ document.addEventListener('DOMContentLoaded', function() {
         text = text.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
         
         return text;
+    }
+
+    // 문서 원문에서 다시 태그로 허용하는 단순 인라인 서식 (속성이 있으면 허용하지 않음)
+    const ALLOWED_INLINE_TAGS = ['b', 'strong', 'i', 'em', 'u', 's', 'sub', 'sup'];
+
+    // 허용 목록 태그를 신뢰된 조각으로 교체 (그 외 태그는 이후 이스케이프되어 텍스트로 표시)
+    function keepAllowedInlineTags(text, keepTrusted) {
+        return text
+            .replace(/<(\/?)([a-zA-Z]+)\s*>/g, (tag, slash, name) => {
+                const tagName = name.toLowerCase();
+                return ALLOWED_INLINE_TAGS.includes(tagName) ? keepTrusted(`<${slash}${tagName}>`) : tag;
+            })
+            .replace(/<br\s*\/?>/gi, () => keepTrusted('<br>'))
+            .replace(/<a([\t\n\f\r ][^<>]*)>/gi, (tag, attributeText) => {
+                const anchor = buildSafeAnchor(attributeText);
+                return anchor ? keepTrusted(anchor) : tag;
+            })
+            .replace(/<\/a\s*>/gi, () => keepTrusted('</a>'));
+    }
+
+    // <a> 속성: href(필수), target(_blank/_self), rel(값은 버리고 고정값 사용)만 허용
+    const ANCHOR_ATTRIBUTE_PATTERN = /^[\t\n\f\r ]+([a-zA-Z][a-zA-Z0-9-]*)(?:[\t\n\f\r ]*=[\t\n\f\r ]*(?:"([^"]*)"|'([^']*)'|([^\t\n\f\r "'<>`]+)))?/;
+    const ALLOWED_LINK_TARGETS = ['_blank', '_self'];
+
+    // 원문 <a> 속성을 HTML 규칙대로 분해/검증하여 새 태그로 직렬화 (허용 외 속성, 중복, 모호한 형식이면 null)
+    function buildSafeAnchor(attributeText) {
+        if (/[]/.test(attributeText)) return null;
+        const attributes = {};
+        let rest = attributeText;
+        while (!/^[\t\n\f\r ]*$/.test(rest)) {
+            const attribute = rest.match(ANCHOR_ATTRIBUTE_PATTERN);
+            if (!attribute) return null;
+            const name = attribute[1].toLowerCase();
+            const rawValue = attribute[2] !== undefined ? attribute[2] : attribute[3] !== undefined ? attribute[3] : attribute[4];
+            if (!['href', 'target', 'rel'].includes(name) || name in attributes || rawValue === undefined) return null;
+            const value = decodeAttributeReferences(rawValue);
+            if (value === null) return null;
+            attributes[name] = value;
+            rest = rest.slice(attribute[0].length);
+        }
+        const href = normalizeLinkHref(attributes.href);
+        if (!href) return null;
+        let targetAttribute = '';
+        if (attributes.target !== undefined) {
+            const target = attributes.target.replace(/[A-Z]/g, c => c.toLowerCase());
+            if (!ALLOWED_LINK_TARGETS.includes(target)) return null;
+            targetAttribute = ` target="${target}"`;
+        }
+        return `<a href="${escapeHtml(href)}"${targetAttribute} rel="noopener noreferrer">`;
+    }
+
+    // 속성값에서 해석을 지원하는 이름 있는 문자 참조 (그 외 ';'로 끝나는 참조는 링크로 허용하지 않음)
+    const ATTRIBUTE_NAMED_REFERENCES = {
+        amp: '&', AMP: '&', lt: '<', LT: '<', gt: '>', GT: '>', quot: '"', QUOT: '"', apos: "'",
+        colon: ':', sol: '/', quest: '?', equals: '=', num: '#', percnt: '%', period: '.', commat: '@',
+        lpar: '(', rpar: ')', Tab: '\t', NewLine: '\n'
+    };
+    // HTML 표준에서 ';' 없이도 해석되는 이름 (속성값에서는 뒤에 '='나 영숫자가 오면 해석되지 않음)
+    const LEGACY_REFERENCE_NAMES = new Set(('AElig AMP Aacute Acirc Agrave Aring Atilde Auml COPY Ccedil ETH Eacute Ecirc ' +
+        'Egrave Euml GT Iacute Icirc Igrave Iuml LT Ntilde Oacute Ocirc Ograve Oslash Otilde Ouml QUOT REG THORN Uacute ' +
+        'Ucirc Ugrave Uuml Yacute aacute acirc acute aelig agrave amp aring atilde auml brvbar ccedil cedil cent copy curren ' +
+        'deg divide eacute ecirc egrave eth euml frac12 frac14 frac34 gt iacute icirc iexcl igrave iquest iuml laquo lt ' +
+        'macr micro middot nbsp not ntilde oacute ocirc ograve ordf ordm oslash otilde ouml para plusmn pound quot raquo ' +
+        'reg sect shy sup1 sup2 sup3 szlig thorn times uacute ucirc ugrave uml uuml yacute yen yuml').split(' '));
+
+    // 속성값 문자 참조를 브라우저와 같은 규칙으로 해석 (확실하게 해석할 수 없으면 null)
+    // 예: "?a=1&b=2"의 "&b"는 참조가 아니므로 그대로, "&amp;"는 "&", "&colon;"은 ":"
+    function decodeAttributeReferences(value) {
+        let decoded = '';
+        let index = 0;
+        while (index < value.length) {
+            const ampersand = value.indexOf('&', index);
+            if (ampersand === -1) {
+                decoded += value.slice(index);
+                break;
+            }
+            decoded += value.slice(index, ampersand);
+            const rest = value.slice(ampersand + 1);
+            const numeric = rest.match(/^#(?:[xX]([0-9a-fA-F]+)|([0-9]+));?/);
+            const named = rest.match(/^[a-zA-Z0-9]+/);
+            if (numeric) {
+                const codePoint = numeric[1] !== undefined ? parseInt(numeric[1], 16) : parseInt(numeric[2], 10);
+                // NUL/제어문자/C1/서로게이트/비문자/범위 밖은 브라우저 치환 규칙이 있어 허용하지 않음
+                if (!(codePoint >= 0x20 && codePoint <= 0x10FFFF) || (codePoint >= 0x7F && codePoint <= 0x9F) ||
+                    (codePoint >= 0xD800 && codePoint <= 0xDFFF) || (codePoint >= 0xFDD0 && codePoint <= 0xFDEF) ||
+                    (codePoint & 0xFFFE) === 0xFFFE) return null;
+                decoded += String.fromCodePoint(codePoint);
+                index = ampersand + 1 + numeric[0].length;
+            } else if (named && rest.charAt(named[0].length) === ';') {
+                if (!Object.prototype.hasOwnProperty.call(ATTRIBUTE_NAMED_REFERENCES, named[0])) return null;
+                decoded += ATTRIBUTE_NAMED_REFERENCES[named[0]];
+                index = ampersand + 2 + named[0].length;
+            } else if (named && LEGACY_REFERENCE_NAMES.has(named[0]) && rest.charAt(named[0].length) !== '=') {
+                // ';' 없는 레거시 참조가 해석되는 경우: 기본 4종만 해석하고 나머지는 허용하지 않음
+                if (!['amp', 'AMP', 'lt', 'LT', 'gt', 'GT', 'quot', 'QUOT'].includes(named[0])) return null;
+                decoded += ATTRIBUTE_NAMED_REFERENCES[named[0]];
+                index = ampersand + 1 + named[0].length;
+            } else {
+                // 문자 참조가 아닌 일반 '&' (예: 쿼리 구분자)
+                decoded += '&';
+                index = ampersand + 1;
+            }
+        }
+        return decoded;
+    }
+
+    // 링크 주소 검증/정규화: 신뢰된 기준(document.baseURI)으로 실제 URL 파싱 후 허용 프로토콜만 통과
+    // 스킴이 있는 주소는 파싱 결과로 직렬화하고, 상대 주소는 원래 형태(앞뒤 공백 제거)를 유지
+    function normalizeLinkHref(value) {
+        const safeValue = sanitizeUrl(value, ['http:', 'https:', 'mailto:']);
+        if (!safeValue) return null;
+        const trimmed = safeValue.replace(/^ +| +$/g, '');
+        return /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed) ? new URL(trimmed, document.baseURI).href : trimmed;
+    }
+
+    // URL 프로토콜 검증 (상대 경로는 현재 문서 기준으로 해석하여 검사)
+    function sanitizeUrl(value, allowedProtocols) {
+        if (typeof value !== 'string' || value.trim() === '') return null;
+        if (/[\u0000-\u001F\u007F]/.test(value)) return null;
+        let parsed;
+        try {
+            parsed = new URL(value, document.baseURI);
+        } catch (e) {
+            return null;
+        }
+        return allowedProtocols.includes(parsed.protocol) ? value : null;
+    }
+
+    // 마크다운 원문 이스케이프 (올바른 형태의 문자 참조는 유지)
+    function escapeMarkdownText(text) {
+        return text
+            .replace(/&(?!(?:[a-zA-Z][a-zA-Z0-9]{1,31}|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});)/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // HTML 이스케이프 함수 (문서/서버에서 온 값을 HTML 문자열에 넣기 전에 사용)
+    function escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 });
 </script>

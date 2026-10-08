@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            resultsList.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-md p-4 m-4"><div class="flex"><div class="flex-shrink-0"><svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg></div><div class="ml-3"><p class="text-sm text-red-800">${error.message}</p></div></div></div>`;
+            resultsList.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-md p-4 m-4"><div class="flex"><div class="flex-shrink-0"><svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg></div><div class="ml-3"><p class="text-sm text-red-800">${escapeHtml(error.message)}</p></div></div></div>`;
         });
     }
     
@@ -233,11 +233,11 @@ document.addEventListener('DOMContentLoaded', function() {
             resultItem.className = 'block hover:bg-gray-50 px-4 py-4 border-b border-gray-200 cursor-pointer transition-colors';
             resultItem.innerHTML = `
                 <div class="flex justify-between items-start mb-2">
-                    <h4 class="text-sm font-medium text-gray-900 truncate">${result.filename}</h4>
-                    <span class="text-xs text-gray-500 ml-2 flex-shrink-0">${new Date(result.date).toLocaleDateString()}</span>
+                    <h4 class="text-sm font-medium text-gray-900 truncate">${escapeHtml(result.filename)}</h4>
+                    <span class="text-xs text-gray-500 ml-2 flex-shrink-0">${escapeHtml(new Date(result.date).toLocaleDateString())}</span>
                 </div>
-                <p class="text-sm text-gray-600 mb-1">${result.matches.length}개 일치 항목 발견</p>
-                <div class="text-xs text-gray-500">${(result.filetype || 'unknown').toUpperCase()}, ${formatFileSize(result.size)}</div>
+                <p class="text-sm text-gray-600 mb-1">${escapeHtml(result.matches.length)}개 일치 항목 발견</p>
+                <div class="text-xs text-gray-500">${escapeHtml(String(result.filetype || 'unknown').toUpperCase())}, ${escapeHtml(formatFileSize(result.size))}</div>
             `;
             
             resultItem.addEventListener('click', function(e) {
@@ -267,8 +267,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayDocumentPreview(document) {
         documentPreview.innerHTML = `
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 truncate">${document.filename}</h3>
-                <a href="/view/document/${document.id}" class="inline-flex items-center px-3 py-1 border border-primary-300 text-sm font-medium rounded-md text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors" target="_blank">
+                <h3 class="text-lg font-semibold text-gray-900 truncate">${escapeHtml(document.filename)}</h3>
+                <a href="/view/document/${escapeHtml(encodeURIComponent(document.id))}" class="inline-flex items-center px-3 py-1 border border-primary-300 text-sm font-medium rounded-md text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors" target="_blank">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                     </svg>
@@ -281,8 +281,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        ${(document.filetype || 'unknown').toUpperCase()} 파일, ${formatFileSize(document.size)}, 
-                        업로드: ${new Date(document.date).toLocaleString()}
+                        ${escapeHtml(String(document.filetype || 'unknown').toUpperCase())} 파일, ${escapeHtml(formatFileSize(document.size))}, 
+                        업로드: ${escapeHtml(new Date(document.date).toLocaleString())}
                     </div>
                 </div>
                 <div class="p-4 max-h-64 overflow-y-auto">
@@ -291,10 +291,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="border-l-4 border-primary-500 pl-4 py-2">
                                 <div class="text-sm text-gray-500 mb-2">일치 항목 #${idx + 1}</div>
                                 <div class="bg-gray-50 p-3 rounded-md">
-                                    <pre class="text-sm whitespace-pre-wrap font-mono">${match.context_before}<mark class="bg-yellow-200 px-1 rounded">${match.text}</mark>${match.context_after}</pre>
+                                    <pre class="text-sm whitespace-pre-wrap font-mono">${escapeHtml(match.context_before)}<mark class="bg-yellow-200 px-1 rounded">${escapeHtml(match.text)}</mark>${escapeHtml(match.context_after)}</pre>
                                 </div>
                                 <div class="text-xs text-gray-500 mt-2">
-                                    페이지 ${match.page || 'N/A'}, 위치: ${match.position || 'N/A'}
+                                    페이지 ${escapeHtml(match.page || 'N/A')}, 위치: ${escapeHtml(match.position || 'N/A')}
                                 </div>
                             </div>
                         `).join('')}
@@ -311,6 +311,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // HTML 이스케이프 함수 (문서/서버에서 온 값을 HTML 문자열에 넣기 전에 사용)
+    function escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 });
 </script>

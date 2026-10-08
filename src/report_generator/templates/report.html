@@ -87,7 +87,7 @@
                     </div>
                     <div class="mb-3">
                         <span class="text-sm font-medium text-gray-600">일치한 텍스트:</span>
-                        <div class="mt-1 p-2 bg-white border border-gray-200 rounded text-gray-900">{{ match.text|safe if match.text is defined else match.matchedText|safe }}</div>
+                        <div class="mt-1 p-2 bg-white border border-gray-200 rounded text-gray-900">{{ match.text if match.text is defined else match.matchedText|report_markup }}</div>
                     </div>
                     <div class="mb-3">
                         <span class="text-sm font-medium text-gray-600">점수:</span>
@@ -97,15 +97,15 @@
                     <div>
                         <span class="text-sm font-medium text-gray-600">주변 맥락:</span>
                         <div class="mt-1 p-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">
-                            {{ match.context_before|safe if match.context_before is defined else '' }}
-                            <mark class="bg-yellow-200">{{ match.text|safe if match.text is defined else '' }}</mark>
-                            {{ match.context_after|safe if match.context_after is defined else '' }}
+                            {{ match.context_before if match.context_before is defined else '' }}
+                            <mark class="bg-yellow-200">{{ match.text if match.text is defined else '' }}</mark>
+                            {{ match.context_after if match.context_after is defined else '' }}
                         </div>
                     </div>
                     {% elif match.context %}
                     <div>
                         <span class="text-sm font-medium text-gray-600">주변 맥락:</span>
-                        <div class="mt-1 p-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">{{ match.context|safe }}</div>
+                        <div class="mt-1 p-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700">{{ match.context|report_markup }}</div>
                     </div>
                     {% endif %}
                 </div>

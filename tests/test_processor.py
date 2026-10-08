@@ -12,9 +12,9 @@ from src.document_processor.processor import DocumentProcessor
 def test_processor():
     # 테스트 파일 경로
     test_files = [
-        "/Users/danny/Documents/document-checker/input/test_section.txt",
-        "/Users/danny/Documents/document-checker/input/test1.txt",
-        "/Users/danny/Documents/document-checker/input/test2.txt"
+        str(Path.home() / 'Documents/document-checker/input/test_section.txt'),
+        str(Path.home() / 'Documents/document-checker/input/test1.txt'),
+        str(Path.home() / 'Documents/document-checker/input/test2.txt')
     ]
     
     # DocumentProcessor 초기화

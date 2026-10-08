@@ -9,7 +9,8 @@ import datetime
 import uuid
 from pathlib import Path
 from typing import Dict, List, Any, Optional
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from .formatting import report_markup
 from collections import Counter # 통계 생성을 위해 Counter 추가
 import logging # 로깅 사용을 위해 추가
 
@@ -40,7 +41,9 @@ class ReportGenerator:
         # Jinja2 템플릿 환경 설정
         template_dir = os.path.join(os.path.dirname(__file__), 'templates')
         os.makedirs(template_dir, exist_ok=True)
-        self.jinja_env = Environment(loader=FileSystemLoader(template_dir))
+        self.jinja_env = Environment(loader=FileSystemLoader(template_dir),
+                                     autoescape=select_autoescape(['html', 'xml']))
+        self.jinja_env.filters['report_markup'] = report_markup
     
     def generate_report(self, search_results: Dict[str, Any], report_format: str = 'html') -> Dict[str, Any]:
         """
@@ -307,10 +310,10 @@ class ReportGenerator:
         <div class="match">
             <p><strong>문서 ID:</strong> {{ match.documentId }}</p>
             <p><strong>일치한 필드:</strong> {{ match.fieldName }}</p>
-            <p><strong>일치한 텍스트:</strong> {{ match.matchedText|safe }}</p>
+            <p><strong>일치한 텍스트:</strong> {{ match.matchedText|report_markup }}</p>
             <p><strong>점수:</strong> {{ "%.2f"|format(match.score * 100) }}%</p>
             {% if match.context %}
-            <p><strong>주변 맥락:</strong> {{ match.context|safe }}</p>
+            <p><strong>주변 맥락:</strong> {{ match.context|report_markup }}</p>
             {% endif %}
         </div>
         {% endfor %}
